@@ -207,43 +207,4 @@ Your Excel file should have the following columns:
 | john@example.com   | John Doe      | ...          |
 | jane@example.com   | Jane Smith    | ...          |
 ```
-
-Use column names in templates: `Hello {{name}}, your email is {{email}}`
-
-## 🐛 Troubleshooting
-
-### MongoDB Connection Error
-- Ensure MongoDB is running: `mongod`
-- Check MONGODB_URI in .env
-
-### Gmail SMTP Error
-- Use App Password, not regular password
-- Enable "Less secure app access" if using regular Gmail password
-
-### CORS Error
-- Check FRONTEND_URL in backend .env
-- Ensure credentials: true in fetch requests
-
-### Google OAuth Not Working
-- Verify Client ID and Secret
-- Check redirect URI matches in Google Cloud Console
-
-## 📚 Future Enhancements
-
-- Email scheduling
-- Template library
-- Advanced analytics
-- A/B testing
-- Attachment support
-- Email automation workflows
-- Webhook support
-- API rate limiting
-- Email delivery webhooks
-
-## 📄 License
-
-MIT License
-
----
-
-**Happy Email Sending! 📧**
+happy coding 😎
