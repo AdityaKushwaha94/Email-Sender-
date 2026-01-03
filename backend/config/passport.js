@@ -18,14 +18,12 @@ passport.use(new GoogleStrategy({
         console.log('Google OAuth: Existing user found:', user.email);
         // Check if user is blacklisted
         if (user.isBlacklisted) {
-          console.log('Google OAuth: User is blacklisted:', user.email);
+          
           return done(null, false, { message: 'User is blacklisted' });
         }
         return done(null, user);
       }
-      
-      // Create new user
-      console.log('Google OAuth: Creating new user');
+
       user = new User({
         googleId: profile.id,
         email: profile.emails[0].value,

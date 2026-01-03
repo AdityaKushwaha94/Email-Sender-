@@ -6,10 +6,7 @@ const auth = require('../middleware/auth');
 
 const router = express.Router();
 
-// Test route
 
-
-// Google OAuth Routes
 router.get('/google', (req, res, next) => {
   // 
   
@@ -45,7 +42,7 @@ router.get('/google/callback', passport.authenticate('google', {
     res.redirect(redirectUrl);
   } catch (error) {
     console.error('OAuth callback error:', error);
-    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3001'}/login?error=callback_error`);
+    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=callback_error`);
   }
 });
 
