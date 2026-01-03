@@ -7,7 +7,7 @@ const { emailQueue, redis } = require('../../config/redis');
 const createTransporter = async (user) => {
   // Use user's custom email settings if available
   if (user.emailCredentials && user.emailCredentials.smtpHost) {
-    return nodemailer.createTransporter({
+    return nodemailer.createTransport({
       host: user.emailCredentials.smtpHost,
       port: user.emailCredentials.smtpPort || 587,
       secure: false,
@@ -18,7 +18,7 @@ const createTransporter = async (user) => {
     });
   } else {
     // Use default Gmail SMTP
-    return nodemailer.createTransporter({
+    return nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER,
@@ -32,7 +32,7 @@ const createTransporter = async (user) => {
 const sendSingleEmail = async ({ to, subject, message, name }) => {
   try {
     // For now, use system email credentials
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER,
@@ -71,7 +71,7 @@ const sendSingleEmail = async ({ to, subject, message, name }) => {
 
 // Send multiple emails (up to 10)
 const sendMultipleEmails = async ({ subject, message, recipients }) => {
-  const transporter = nodemailer.createTransporter({
+  const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
       user: process.env.EMAIL_USER,
@@ -179,7 +179,7 @@ const processCampaignDirectly = async (campaignId) => {
     campaign.status = 'processing';
     await campaign.save();
 
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER,

@@ -20,7 +20,7 @@ emailQueue.process('sendSingleEmail', async (job) => {
   
   try {
     // Create transporter from job data
-    const transport = nodemailer.createTransporter(transporter);
+    const transport = nodemailer.createTransport(transporter);
     
     // Personalize email if needed
     let emailBody = campaign.body;
