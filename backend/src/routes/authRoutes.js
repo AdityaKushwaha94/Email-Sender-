@@ -6,10 +6,13 @@ const auth = require('../middleware/auth');
 
 const router = express.Router();
 
+// Test route
+
+
 // Google OAuth Routes
 router.get('/google', (req, res, next) => {
-  console.log('Google OAuth route accessed');
-  console.log('GOOGLE_CLIENT_ID configured:', !!process.env.GOOGLE_CLIENT_ID);
+  // 
+  
   passport.authenticate('google', {
     scope: ['profile', 'email']
   })(req, res, next);
@@ -19,9 +22,7 @@ router.get('/google/callback', passport.authenticate('google', {
   failureRedirect: `${process.env.FRONTEND_URL || 'http://localhost:3001'}/login?error=auth_failed`
 }), (req, res) => {
   try {
-    console.log('OAuth callback triggered');
-    console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
-    console.log('User from OAuth:', req.user ? req.user.email : 'No user');
+   
     
     if (!req.user) {
       console.error('OAuth callback: No user found in request');
@@ -40,8 +41,6 @@ router.get('/google/callback', passport.authenticate('google', {
     );
     
     const redirectUrl = `${process.env.FRONTEND_URL || 'http://localhost:3001'}/login?token=${token}`;
-    console.log('OAuth callback successful for user:', req.user.email);
-    console.log('Redirecting to:', redirectUrl);
     
     res.redirect(redirectUrl);
   } catch (error) {
