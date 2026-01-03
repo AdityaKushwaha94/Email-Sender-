@@ -9,14 +9,11 @@ passport.use(new GoogleStrategy({
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
-      console.log('Google OAuth Strategy: Callback triggered');
-      console.log('Google OAuth: Processing user profile for email:', profile.emails?.[0]?.value);
+      
       
       let user = await User.findOne({ googleId: profile.id });
       
       if (user) {
-        console.log('Google OAuth: Existing user found:', user.email);
-        // Check if user is blacklisted
         if (user.isBlacklisted) {
           
           return done(null, false, { message: 'User is blacklisted' });
