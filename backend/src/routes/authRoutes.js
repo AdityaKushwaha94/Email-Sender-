@@ -19,19 +19,19 @@ router.get('/google', (req, res, next) => {
 });
 
 router.get('/google/callback', passport.authenticate('google', {
-  failureRedirect: `${process.env.FRONTEND_URL || 'http://localhost:3001'}/login?error=auth_failed`
+  failureRedirect: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=auth_failed`
 }), (req, res) => {
   try {
    
     
     if (!req.user) {
       console.error('OAuth callback: No user found in request');
-      return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3001'}/login?error=no_user`);
+      return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=no_user`);
     }
 
     if (!process.env.JWT_SECRET) {
       console.error('OAuth callback: JWT_SECRET not found in environment variables');
-      return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3001'}/login?error=config_error`);
+      return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=config_error`);
     }
 
     const token = jwt.sign(
@@ -40,7 +40,7 @@ router.get('/google/callback', passport.authenticate('google', {
       { expiresIn: '24h' }
     );
     
-    const redirectUrl = `${process.env.FRONTEND_URL || 'http://localhost:3001'}/login?token=${token}`;
+    const redirectUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?token=${token}`;
     
     res.redirect(redirectUrl);
   } catch (error) {
