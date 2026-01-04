@@ -44,26 +44,26 @@ const Sidebar = ({ activeSection, setActiveSection }) => {
     sidebar: {
       width: '280px',
       height: '100vh',
-      background: 'linear-gradient(180deg, #0f0f0f 0%, #1a1a1a 100%)',
-      borderRight: '1px solid #2d2d2d',
+      background: 'linear-gradient(180deg, #0F172A 0%, #1E293B 100%)',
+      borderRight: '1px solid #334155',
       display: 'flex',
       flexDirection: 'column',
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
     },
     header: {
       padding: '2rem 1.5rem 1.5rem',
-      borderBottom: '1px solid #2d2d2d'
+      borderBottom: '1px solid #334155'
     },
     title: {
       fontSize: '1.125rem',
       fontWeight: '700',
-      color: '#ffffff',
+      color: '#F1F5F9',
       margin: '0',
       letterSpacing: '-0.025em'
     },
     subtitle: {
       fontSize: '0.75rem',
-      color: '#9ca3af',
+      color: '#94A3B8',
       margin: '0.25rem 0 0',
       fontWeight: '500'
     },
@@ -83,7 +83,7 @@ const Sidebar = ({ activeSection, setActiveSection }) => {
       background: 'transparent',
       border: 'none',
       borderRadius: '12px',
-      color: '#d1d5db',
+      color: '#94A3B8',
       fontSize: '0.875rem',
       fontWeight: '600',
       cursor: 'pointer',
@@ -95,8 +95,8 @@ const Sidebar = ({ activeSection, setActiveSection }) => {
       overflow: 'hidden'
     },
     activeButton: {
-      background: 'linear-gradient(135deg, #ffffff 0%, #e5e7eb 100%)',
-      color: '#000000',
+      background: 'linear-gradient(135deg, #64748B 0%, #475569 100%)',
+      color: '#F1F5F9',
       boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1)'
     },
     iconWrapper: {
@@ -125,15 +125,15 @@ const Sidebar = ({ activeSection, setActiveSection }) => {
     },
     footer: {
       padding: '1.5rem',
-      borderTop: '1px solid #2d2d2d'
+      borderTop: '1px solid #334155'
     },
     footerButton: {
       width: '100%',
       padding: '0.75rem 1rem',
       background: 'transparent',
-      border: '1px solid #374151',
+      border: '1px solid #334155',
       borderRadius: '8px',
-      color: '#d1d5db',
+      color: '#94A3B8',
       fontSize: '0.875rem',
       fontWeight: '600',
       cursor: 'pointer',
@@ -163,21 +163,21 @@ const Sidebar = ({ activeSection, setActiveSection }) => {
               }}
               onMouseOver={(e) => {
                 if (activeSection !== item.id) {
-                  e.target.style.backgroundColor = '#374151';
-                  e.target.style.color = '#ffffff';
+                  e.target.style.backgroundColor = '#334155';
+                  e.target.style.color = '#F1F5F9';
                 }
               }}
               onMouseOut={(e) => {
                 if (activeSection !== item.id) {
                   e.target.style.backgroundColor = 'transparent';
-                  e.target.style.color = '#d1d5db';
+                  e.target.style.color = '#94A3B8';
                 }
               }}
             >
               <div style={styles.iconWrapper}>
                 <item.icon 
                   size={18} 
-                  color={activeSection === item.id ? '#000000' : item.color}
+                  color={activeSection === item.id ? '#F1F5F9' : item.color}
                 />
               </div>
               <div style={styles.textContent}>
@@ -193,12 +193,12 @@ const Sidebar = ({ activeSection, setActiveSection }) => {
         <button
           style={styles.footerButton}
           onMouseOver={(e) => {
-            e.target.style.backgroundColor = '#374151';
-            e.target.style.borderColor = '#6b7280';
+            e.target.style.backgroundColor = '#334155';
+            e.target.style.borderColor = '#64748B';
           }}
           onMouseOut={(e) => {
             e.target.style.backgroundColor = 'transparent';
-            e.target.style.borderColor = '#374151';
+            e.target.style.borderColor = '#334155';
           }}
         >
           <FiSettings style={{ marginRight: '8px' }} size={16} />
@@ -208,16 +208,16 @@ const Sidebar = ({ activeSection, setActiveSection }) => {
           style={{
             ...styles.footerButton,
             marginBottom: '0',
-            color: '#ffffff',
-            borderColor: '#374151'
+            color: '#F1F5F9',
+            borderColor: '#334155'
           }}
           onMouseOver={(e) => {
             e.target.style.backgroundColor = '#dc2626';
-            e.target.style.color = '#ffffff';
+            e.target.style.color = '#F1F5F9';
           }}
           onMouseOut={(e) => {
             e.target.style.backgroundColor = 'transparent';
-            e.target.style.color = '#f87171';
+            e.target.style.color = '#fca5a5';
           }}
         >
           <FiLogOut style={{ marginRight: '8px' }} size={16} />

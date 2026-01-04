@@ -39,7 +39,7 @@ const SingleEmail = () => {
 
   return (
     <div>
-      <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem' }}>Send Email to 1 Person</h2>
+      <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem', color: '#F1F5F9' }}>Send Email to 1 Person</h2>
       
       {alert.message && (
         <div className={`alert alert-${alert.type}`}>

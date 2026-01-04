@@ -70,7 +70,7 @@ const MultipleEmail = () => {
 
   return (
     <div>
-      <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem' }}>Send Email to Up to 10 People</h2>
+      <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem', color: '#F1F5F9' }}>Send Email to Up to 10 People</h2>
       
       {alert.message && (
         <div className={`alert alert-${alert.type}`}>

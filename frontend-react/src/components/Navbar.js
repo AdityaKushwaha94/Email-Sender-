@@ -5,7 +5,7 @@ import {
   FaShieldAlt, 
   FaUser, 
   FaSignOutAlt, 
-  FaBell, 
+  // FaBell, 
   FaSearch 
 } from 'react-icons/fa';
 
@@ -20,8 +20,8 @@ const Navbar = () => {
 
   const styles = {
     navbar: {
-      backgroundColor: '#1a1a1a',
-      borderBottom: '1px solid #2d2d2d',
+      backgroundColor: '#1E293B',
+      borderBottom: '1px solid #334155',
       padding: '0 2rem',
       boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)',
       position: 'sticky',
@@ -45,7 +45,7 @@ const Navbar = () => {
     logo: {
       fontSize: '1.5rem',
       fontWeight: '700',
-      color: '#ffffff',
+      color: '#F1F5F9',
       letterSpacing: '-0.025em',
       display: 'flex',
       alignItems: 'center',
@@ -65,11 +65,11 @@ const Navbar = () => {
     searchInput: {
       width: '100%',
       padding: '0.75rem 1rem 0.75rem 2.5rem',
-      border: '2px solid #374151',
+      border: '2px solid #334155',
       borderRadius: '12px',
       fontSize: '0.875rem',
-      backgroundColor: '#111827',
-      color: '#ffffff',
+      backgroundColor: '#0F172A',
+      color: '#F1F5F9',
       transition: 'all 0.2s ease-in-out',
       outline: 'none'
     },
@@ -78,7 +78,7 @@ const Navbar = () => {
       left: '0.875rem',
       top: '50%',
       transform: 'translateY(-50%)',
-      color: '#6b7280',
+      color: '#94A3B8',
       fontSize: '0.875rem'
     },
     rightSection: {
@@ -86,34 +86,25 @@ const Navbar = () => {
       alignItems: 'center',
       gap: '1rem'
     },
-    notificationButton: {
-      position: 'relative',
-      padding: '0.75rem',
-      backgroundColor: 'transparent',
-      border: 'none',
-      borderRadius: '12px',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease-in-out',
-      color: '#9ca3af'
-    },
+ 
     userSection: {
       display: 'flex',
       alignItems: 'center',
       gap: '12px',
       padding: '0.5rem 1rem',
-      backgroundColor: '#111827',
+      backgroundColor: '#0F172A',
       borderRadius: '12px',
-      border: '2px solid #374151'
+      border: '2px solid #334155'
     },
     userAvatar: {
       width: '36px',
       height: '36px',
       borderRadius: '50%',
-      backgroundColor: '#ffffff',
+      backgroundColor: '#64748B',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      color: '#000000',
+      color: '#F1F5F9',
       fontSize: '0.875rem',
       fontWeight: '600'
     },
@@ -124,12 +115,12 @@ const Navbar = () => {
     userName: {
       fontSize: '0.875rem',
       fontWeight: '600',
-      color: '#ffffff',
+      color: '#F1F5F9',
       lineHeight: '1.2'
     },
     userRole: {
       fontSize: '0.75rem',
-      color: '#9ca3af',
+      color: '#94A3B8',
       lineHeight: '1.2'
     },
     logoutButton: {
@@ -138,8 +129,8 @@ const Navbar = () => {
       gap: '8px',
       padding: '0.75rem 1rem',
       backgroundColor: 'transparent',
-      color: '#ffffff',
-      border: '2px solid #374151',
+      color: '#F1F5F9',
+      border: '2px solid #334155',
       borderRadius: '8px',
       fontSize: '0.875rem',
       fontWeight: '600',
@@ -153,7 +144,7 @@ const Navbar = () => {
       <div style={styles.container}>
         <div style={styles.logoSection}>
           <div style={styles.logo}>
-            <FaShieldAlt color="#ffffff" size={24} />
+            <FaShieldAlt color="#F1F5F9" size={24} />
             Email Sender Pro
           </div>
         </div>
@@ -166,12 +157,12 @@ const Navbar = () => {
               placeholder="Search campaigns, templates, contacts..."
               style={styles.searchInput}
               onFocus={(e) => {
-                e.target.style.borderColor = '#ffffff';
-                e.target.style.backgroundColor = '#1a1a1a';
+                e.target.style.borderColor = '#64748B';
+                e.target.style.backgroundColor = '#1E293B';
               }}
               onBlur={(e) => {
-                e.target.style.borderColor = '#374151';
-                e.target.style.backgroundColor = '#111827';
+                e.target.style.borderColor = '#334155';
+                e.target.style.backgroundColor = '#0F172A';
               }}
             />
           </div>
@@ -181,15 +172,15 @@ const Navbar = () => {
           <button
             style={styles.notificationButton}
             onMouseOver={(e) => {
-              e.target.style.backgroundColor = '#374151';
-              e.target.style.color = '#ffffff';
+              e.target.style.backgroundColor = '#334155';
+              e.target.style.color = '#F1F5F9';
             }}
             onMouseOut={(e) => {
               e.target.style.backgroundColor = 'transparent';
-              e.target.style.color = '#9ca3af';
+              e.target.style.color = '#94A3B8';
             }}
           >
-            <FaBell size={18} />
+            {/* <FaBell size={18} />
             <div style={{
               position: 'absolute',
               top: '6px',
@@ -198,7 +189,7 @@ const Navbar = () => {
               height: '8px',
               backgroundColor: '#dc2626',
               borderRadius: '50%'
-            }}></div>
+            }}></div> */}
           </button>
 
           <div style={styles.userSection}>
@@ -220,13 +211,13 @@ const Navbar = () => {
             style={styles.logoutButton}
             onMouseOver={(e) => {
               e.target.style.backgroundColor = '#dc2626';
-              e.target.style.color = '#ffffff';
+              e.target.style.color = '#F1F5F9';
               e.target.style.borderColor = '#dc2626';
             }}
             onMouseOut={(e) => {
               e.target.style.backgroundColor = 'transparent';
-              e.target.style.color = '#ffffff';
-              e.target.style.borderColor = '#374151';
+              e.target.style.color = '#F1F5F9';
+              e.target.style.borderColor = '#334155';
             }}
           >
             <FaSignOutAlt />

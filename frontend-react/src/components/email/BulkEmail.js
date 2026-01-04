@@ -98,7 +98,7 @@ const BulkEmail = () => {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6">Bulk Email Campaign</h2>
+      <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem', color: '#F1F5F9' }}>Bulk Email Campaign</h2>
       
       {alert.message && (
         <div className={`alert alert-${alert.type}`}>
@@ -143,7 +143,7 @@ const BulkEmail = () => {
             placeholder="Enter your message (use {{name}} to personalize with recipient's name)"
             required
           />
-          <p className="text-sm text-gray-600 mt-2">
+          <p style={{ fontSize: '0.875rem', color: '#94A3B8', marginTop: '0.5rem' }}>
             💡 Tip: Use {"{{name}}"} in your message to automatically insert each recipient's name
           </p>
         </div>

@@ -49,25 +49,25 @@ const Dashboard = () => {
     },
     mainContent: {
       flex: 1,
-      backgroundColor: '#0f0f0f',
+      backgroundColor: '#0F172A',
       overflow: 'auto'
     },
     contentHeader: {
-      backgroundColor: '#1a1a1a',
+      backgroundColor: '#1E293B',
       padding: '2rem 2.5rem',
-      borderBottom: '1px solid #2d2d2d',
+      borderBottom: '1px solid #334155',
       marginBottom: '2rem'
     },
     sectionTitle: {
       fontSize: '1.875rem',
       fontWeight: '700',
-      color: '#ffffff',
+      color: '#F1F5F9',
       marginBottom: '0.5rem',
       letterSpacing: '-0.025em'
     },
     breadcrumb: {
       fontSize: '0.875rem',
-      color: '#9ca3af',
+      color: '#94A3B8',
       fontWeight: '500'
     },
     contentContainer: {

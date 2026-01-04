@@ -96,18 +96,20 @@ const Login = () => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #2d2d2d 100%)',
+      background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #334155 100%)',
       padding: '20px',
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
     },
     card: {
       maxWidth: '440px',
       width: '100%',
-      backgroundColor: '#1a1a1a',
+      backgroundColor: '#1E293B',
       padding: '3rem 2.5rem',
       borderRadius: '16px',
       boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2)',
-      border: '1px solid #2d2d2d'
+      border: '1px solid #334155',
+      position: 'relative',
+      margin: '0 auto'
     },
     header: {
       textAlign: 'center',
@@ -120,17 +122,17 @@ const Login = () => {
     title: {
       fontSize: '1.875rem',
       fontWeight: '700',
-      color: '#ffffff',
+      color: '#F1F5F9',
       marginBottom: '0.5rem',
       letterSpacing: '-0.025em'
     },
     subtitle: {
-      color: '#9ca3af',
+      color: '#94A3B8',
       fontSize: '0.95rem',
       lineHeight: '1.5'
     },
     errorAlert: {
-      backgroundColor: '#1f1315',
+      backgroundColor: '#0F172A',
       border: '1px solid #dc2626',
       color: '#fca5a5',
       padding: '1rem',
@@ -141,13 +143,17 @@ const Login = () => {
       fontWeight: '500'
     },
     inputGroup: {
-      marginBottom: '1.5rem',
-      position: 'relative'
+      marginBottom: '1.5rem'
+    },
+    inputContainer: {
+      position: 'relative',
+      display: 'flex',
+      alignItems: 'center'
     },
     label: {
       display: 'block',
       marginBottom: '0.5rem',
-      color: '#e5e7eb',
+      color: '#F1F5F9',
       fontWeight: '600',
       fontSize: '0.875rem'
     },
@@ -155,34 +161,37 @@ const Login = () => {
       width: '100%',
       padding: '0.875rem 1rem',
       paddingLeft: '2.75rem',
-      border: '2px solid #374151',
+      border: '2px solid #334155',
       borderRadius: '8px',
       fontSize: '1rem',
       transition: 'border-color 0.2s ease-in-out',
-      backgroundColor: '#111827',
-      color: '#ffffff',
+      backgroundColor: '#0F172A',
+      color: '#F1F5F9',
       boxSizing: 'border-box'
     },
     inputIcon: {
       position: 'absolute',
       left: '0.875rem',
-      top: '2.1rem',
-      color: '#6b7280',
-      fontSize: '1rem'
+      top: '50%',
+      transform: 'translateY(-50%)',
+      color: '#94A3B8',
+      fontSize: '1rem',
+      pointerEvents: 'none'
     },
     passwordToggle: {
       position: 'absolute',
       right: '0.875rem',
-      top: '2.1rem',
-      color: '#6b7280',
+      top: '50%',
+      transform: 'translateY(-50%)',
+      color: '#94A3B8',
       cursor: 'pointer',
       fontSize: '1rem'
     },
     primaryButton: {
       width: '100%',
       padding: '0.875rem 1.5rem',
-      backgroundColor: '#ffffff',
-      color: '#000000',
+      backgroundColor: '#64748B',
+      color: '#F1F5F9',
       border: 'none',
       borderRadius: '8px',
       fontSize: '1rem',
@@ -199,8 +208,8 @@ const Login = () => {
       width: '100%',
       padding: '0.875rem 1.5rem',
       backgroundColor: 'transparent',
-      color: '#e5e7eb',
-      border: '2px solid #374151',
+      color: '#F1F5F9',
+      border: '2px solid #334155',
       borderRadius: '8px',
       fontSize: '1rem',
       fontWeight: '600',
@@ -218,12 +227,12 @@ const Login = () => {
       position: 'relative'
     },
     dividerLine: {
-      borderTop: '1px solid #374151',
+      borderTop: '1px solid #334155',
       margin: '0'
     },
     dividerText: {
-      backgroundColor: '#1a1a1a',
-      color: '#6b7280',
+      backgroundColor: '#1E293B',
+      color: '#94A3B8',
       padding: '0 1rem',
       fontSize: '0.875rem',
       position: 'absolute',
@@ -232,7 +241,7 @@ const Login = () => {
       transform: 'translateX(-50%)'
     },
     textButton: {
-      color: '#d1d5db',
+      color: '#94A3B8',
       textDecoration: 'none',
       background: 'none',
       border: 'none',
@@ -269,7 +278,7 @@ const Login = () => {
               <label style={styles.label}>
                 Full Name
               </label>
-              <div style={{ position: 'relative' }}>
+              <div style={styles.inputContainer}>
                 <FaUser style={styles.inputIcon} />
                 <input
                   type="text"
@@ -278,8 +287,8 @@ const Login = () => {
                   onChange={handleChange}
                   required={isSignup}
                   style={styles.input}
-                  onFocus={(e) => e.target.style.borderColor = '#ffffff'}
-                  onBlur={(e) => e.target.style.borderColor = '#374151'}
+                  onFocus={(e) => e.target.style.borderColor = '#64748B'}
+                  onBlur={(e) => e.target.style.borderColor = '#334155'}
                   placeholder="Enter your full name"
                 />
               </div>
@@ -290,7 +299,7 @@ const Login = () => {
             <label style={styles.label}>
               Email Address
             </label>
-            <div style={{ position: 'relative' }}>
+            <div style={styles.inputContainer}>
               <FaEnvelope style={styles.inputIcon} />
               <input
                 type="email"
@@ -299,8 +308,8 @@ const Login = () => {
                 onChange={handleChange}
                 required
                 style={styles.input}
-                onFocus={(e) => e.target.style.borderColor = '#ffffff'}
-                onBlur={(e) => e.target.style.borderColor = '#374151'}
+                onFocus={(e) => e.target.style.borderColor = '#64748B'}
+                onBlur={(e) => e.target.style.borderColor = '#334155'}
                 placeholder="Enter your email address"
               />
             </div>
@@ -309,15 +318,17 @@ const Login = () => {
           {isSignup && (
             <div style={styles.inputGroup}>
               <label style={styles.label}>
-                Mobile Number <span style={{ color: '#9ca3af', fontSize: '0.75rem' }}>(Optional)</span>
+                Mobile Number <span style={{ color: '#94A3B8', fontSize: '0.75rem' }}>(Optional)</span>
               </label>
-              <div style={{ position: 'relative' }}>
+              <div style={styles.inputContainer}>
                 <span style={{
-                  position: 'absolute',
-                  left: '0.875rem',
-                  top: '2.1rem',
-                  color: '#9ca3af',
-                  fontSize: '1rem'
+                  ...styles.inputIcon,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '16px',
+                  height: '16px',
+                  fontSize: '0.875rem'
                 }}>📱</span>
                 <input
                   type="tel"
@@ -325,8 +336,8 @@ const Login = () => {
                   value={formData.mobile}
                   onChange={handleChange}
                   style={styles.input}
-                  onFocus={(e) => e.target.style.borderColor = '#ffffff'}
-                  onBlur={(e) => e.target.style.borderColor = '#374151'}
+                  onFocus={(e) => e.target.style.borderColor = '#64748B'}
+                  onBlur={(e) => e.target.style.borderColor = '#334155'}
                   placeholder="Enter your mobile number"
                 />
               </div>
@@ -337,7 +348,7 @@ const Login = () => {
             <label style={styles.label}>
               Password
             </label>
-            <div style={{ position: 'relative' }}>
+            <div style={styles.inputContainer}>
               <FaLock style={styles.inputIcon} />
               <input
                 type={showPassword ? "text" : "password"}
@@ -346,8 +357,8 @@ const Login = () => {
                 onChange={handleChange}
                 required
                 style={styles.input}
-                onFocus={(e) => e.target.style.borderColor = '#ffffff'}
-                onBlur={(e) => e.target.style.borderColor = '#374151'}
+                onFocus={(e) => e.target.style.borderColor = '#64748B'}
+                onBlur={(e) => e.target.style.borderColor = '#334155'}
                 placeholder="Enter your password"
               />
               <div style={styles.passwordToggle} onClick={togglePasswordVisibility}>
@@ -361,11 +372,11 @@ const Login = () => {
             disabled={loading}
             style={{
               ...styles.primaryButton,
-              backgroundColor: loading ? '#6b7280' : '#ffffff',
+              backgroundColor: loading ? '#334155' : '#64748B',
               cursor: loading ? 'not-allowed' : 'pointer'
             }}
-            onMouseOver={(e) => !loading && (e.target.style.backgroundColor = '#e5e7eb')}
-            onMouseOut={(e) => !loading && (e.target.style.backgroundColor = '#ffffff')}
+            onMouseOver={(e) => !loading && (e.target.style.backgroundColor = '#475569')}
+            onMouseOut={(e) => !loading && (e.target.style.backgroundColor = '#64748B')}
           >
             {loading ? (
               <>

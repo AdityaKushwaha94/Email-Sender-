@@ -44,7 +44,7 @@ const emailCampaignSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['draft', 'scheduled', 'queued', 'running', 'completed', 'failed'],
+    enum: ['draft', 'pending','processing', 'scheduled', 'queued', 'running', 'completed', 'failed'],
     default: 'draft'
   },
   jobId: {
