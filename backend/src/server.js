@@ -17,6 +17,7 @@ const userRoutes = require('./routes/userRoutes');
 const { checkRedisHealth } = require('./utils/redisUtils');
 
 const app = express();
+app.set("trust proxy", 1);
 
 // Rate limiting middleware
 const limiter = rateLimit({
@@ -55,6 +56,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, '../../frontend')));
 
 // Session Configuration with Redis Store (if available)
+
 const sessionConfig = {
   secret: process.env.SESSION_SECRET || 'your_session_secret',
   resave: false,
