@@ -1,6 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
+// Configure axios base URL
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://email-sender-2qkj.onrender.com';
+axios.defaults.baseURL = API_BASE_URL;
+
 const AuthContext = createContext();
 
 export const useAuth = () => {

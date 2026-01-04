@@ -56,7 +56,8 @@ const Login = () => {
   }, [location, login, navigate, isAuthenticated]);
 
   const handleGoogleLogin = () => {
-    window.location.href = 'http://localhost:5000/api/auth/google';
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://email-sender-2qkj.onrender.com';
+    window.location.href = `${API_BASE_URL}/api/auth/google`;
   };
 
   const handleChange = (e) => {
