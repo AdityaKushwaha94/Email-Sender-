@@ -9,6 +9,15 @@ const passport = require('passport');
 const path = require('path');
 require('dotenv').config();
 
+// Handle uncaught exceptions
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 const { getRedis, getEmailQueue, isRedisAvailable } = require('../config/redis');
 
 const authRoutes = require('./routes/authRoutes');
