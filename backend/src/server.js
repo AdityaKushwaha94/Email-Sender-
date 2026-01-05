@@ -16,8 +16,8 @@ const emailRoutes = require('./routes/emailRoutes');
 const userRoutes = require('./routes/userRoutes');
 const { checkRedisHealth } = require('./utils/redisUtils');
 
-// const app = express();
-// app.set("trust proxy", 1);
+const app = express();
+app.set("trust proxy", 1);
 
 // Rate limiting middleware
 const limiter = rateLimit({
