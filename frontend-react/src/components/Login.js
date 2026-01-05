@@ -82,7 +82,7 @@ const Login = () => {
   }, [location, login, navigate, isAuthenticated]);
 
   const handleGoogleLogin = () => {
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://email-sender-x31x.vercel.app';
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
     window.location.href = `${API_BASE_URL}/api/auth/google`;
   };
 

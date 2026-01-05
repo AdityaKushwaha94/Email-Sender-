@@ -1,6 +1,7 @@
 const express = require('express');
 const passport = require('passport');
 const jwt = require('jsonwebtoken');
+const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 
@@ -9,11 +10,13 @@ const router = express.Router();
 // Base auth route
 router.get('/', (req, res) => {
   res.json({ 
-    message: 'Auth API is working',
+    message: 'Authentication API',
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
     endpoints: {
-      health: '/api/auth/health',
-      google: '/api/auth/google',
-      googleCallback: '/api/auth/google/callback',
+      health: 'GET /api/auth/health',
+      google: 'GET /api/auth/google',
+      googleCallback: 'GET /api/auth/google/callback',
       register: 'POST /api/auth/register',
       login: 'POST /api/auth/login',
       me: 'GET /api/auth/me',
@@ -26,158 +29,194 @@ router.get('/', (req, res) => {
 // Health check for auth routes
 router.get('/health', (req, res) => {
   res.json({ 
-    message: 'Auth routes are working',
-    timestamp: new Date().toISOString(),
-    origin: req.get('origin')
-  });
-});
-
-// Google OAuth configuration test
-router.get('/google/config', (req, res) => {
-  res.json({
-    hasClientId: !!process.env.GOOGLE_CLIENT_ID,
-    hasClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
-    callbackUrl: process.env.GOOGLE_CALLBACK_URL,
-    frontendUrl: process.env.FRONTEND_URL,
-    backendUrl: process.env.BACKEND_URL,
-    jwtSecretExists: !!process.env.JWT_SECRET
+    status: 'healthy',
+    service: 'authentication',
+    timestamp: new Date().toISOString()
   });
 });
 
 router.get('/google', (req, res, next) => {
-  try {
-    console.log('Google OAuth initiation requested');
-    console.log('GOOGLE_CLIENT_ID exists:', !!process.env.GOOGLE_CLIENT_ID);
-    console.log('GOOGLE_CLIENT_SECRET exists:', !!process.env.GOOGLE_CLIENT_SECRET);
-    console.log('GOOGLE_CALLBACK_URL:', process.env.GOOGLE_CALLBACK_URL);
-    
-    passport.authenticate('google', {
-      scope: ['profile', 'email']
-    })(req, res, next);
-  } catch (error) {
-    console.error('Google OAuth initiation error:', error);
-    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=oauth_init_failed`);
+  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+    return res.redirect('http://localhost:3000/login?error=oauth_not_configured');
   }
+  
+  passport.authenticate('google', {
+    scope: ['profile', 'email']
+  })(req, res, next);
 });
 
 router.get('/google/callback', (req, res, next) => {
-  console.log('Google OAuth callback received');
-  console.log('Query params:', req.query);
-  
   passport.authenticate('google', {
-    failureRedirect: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=auth_failed`
+    failureRedirect: 'http://localhost:3000/login?error=auth_failed'
   }, (err, user, info) => {
     if (err) {
-      console.error('Google OAuth authentication error:', err);
-      return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=auth_error&details=${encodeURIComponent(err.message)}`);
+      return res.redirect('http://localhost:3000/login?error=auth_error');
     }
     
     if (!user) {
-      console.error('Google OAuth: No user returned', info);
-      return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=no_user&info=${encodeURIComponent(JSON.stringify(info))}`);
+      return res.redirect('http://localhost:3000/login?error=auth_failed');
     }
     
-    // Manual login since we're using custom callback
     req.logIn(user, (loginErr) => {
       if (loginErr) {
-        console.error('Login error after OAuth:', loginErr);
-        return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=login_failed`);
+        return res.redirect('http://localhost:3000/login?error=login_failed');
       }
       
       try {
-        console.log('Google OAuth successful for user:', user.email);
-        
-        if (!process.env.JWT_SECRET) {
-          console.error('JWT_SECRET not found in environment variables');
-          return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=config_error`);
-        }
-    
         const token = jwt.sign(
           { userId: user._id },
           process.env.JWT_SECRET,
           { expiresIn: '24h' }
         );
         
-        const redirectUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?token=${token}`;
-        console.log('Redirecting to:', redirectUrl);
-        
-        res.redirect(redirectUrl);
+        res.redirect(`http://localhost:3000/login?token=${token}`);
       } catch (error) {
-        console.error('Token generation error:', error);
-        res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=token_error`);
+        res.redirect('http://localhost:3000/login?error=token_error');
       }
     });
   })(req, res, next);
 });
 
+// Input validation middleware
+const registerValidation = [
+  body('email')
+    .isEmail()
+    .normalizeEmail()
+    .isLength({ max: 100 })
+    .withMessage('Please provide a valid email address'),
+  body('password')
+    .isLength({ min: 6, max: 128 })
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).*$/)
+    .withMessage('Password must be 6-128 characters with at least one uppercase, lowercase, and number'),
+  body('name')
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .matches(/^[a-zA-Z\s]+$/)
+    .withMessage('Name must be 2-50 characters and contain only letters and spaces')
+];
+
+const loginValidation = [
+  body('email')
+    .isEmail()
+    .normalizeEmail()
+    .withMessage('Please provide a valid email address'),
+  body('password')
+    .isLength({ min: 1 })
+    .withMessage('Password is required')
+];
+
+// Helper function to handle validation errors
+const handleValidationErrors = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      error: 'Validation failed',
+      details: errors.array().map(err => err.msg)
+    });
+  }
+  next();
+};
+
 // Email/Password Registration
-router.post('/register', async (req, res) => {
+router.post('/register', registerValidation, handleValidationErrors, async (req, res) => {
   try {
     const { email, password, name } = req.body;
     
-    let user = await User.findOne({ email });
-    if (user) {
-      return res.status(400).json({ error: 'User already exists' });
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({ error: 'User already exists with this email' });
     }
     
-    user = new User({
+    // Create new user
+    const user = new User({
       email,
       password,
-      name
+      name: name.trim()
     });
     
     await user.save();
     
+    // Generate JWT token
     const token = jwt.sign(
       { userId: user._id },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
     
-    res.status(201).json({ token, user: { id: user._id, email: user.email, name: user.name } });
+    // Return success response (exclude password)
+    res.status(201).json({ 
+      token, 
+      user: { 
+        id: user._id, 
+        email: user.email, 
+        name: user.name 
+      } 
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ 
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Registration failed' 
+    });
   }
 });
 
 // Email/Password Login
-router.post('/login', async (req, res) => {
+router.post('/login', loginValidation, handleValidationErrors, async (req, res) => {
   try {
     const { email, password } = req.body;
     
+    // Find user and include password for comparison
     const user = await User.findOne({ email }).select('+password');
     if (!user) {
-      return res.status(400).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: 'Invalid email or password' });
     }
     
+    // Check if user is blacklisted
     if (user.isBlacklisted) {
-      return res.status(403).json({ error: 'Your account has been blacklisted' });
+      return res.status(403).json({ error: 'Account access denied' });
     }
     
+    // Verify password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(400).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: 'Invalid email or password' });
     }
     
+    // Generate JWT token
     const token = jwt.sign(
       { userId: user._id },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
     
-    res.json({ token, user: { id: user._id, email: user.email, name: user.name } });
+    // Return success response (exclude password)
+    res.json({ 
+      token, 
+      user: { 
+        id: user._id, 
+        email: user.email, 
+        name: user.name 
+      } 
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ 
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Login failed' 
+    });
   }
 });
 
 // Get current user
 router.get('/me', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.userId);
+    const user = await User.findById(req.userId).select('-password');
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
     res.json(user);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ 
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Failed to fetch user data' 
+    });
   }
 });
 
