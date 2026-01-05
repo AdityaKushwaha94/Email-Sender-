@@ -103,17 +103,17 @@ app.get('/', (req, res) => {
       users: '/api/users',
       health: '/health'
     },
-    frontend: 'http://localhost:3000'
+    frontend: process.env.FRONTEND_URL || 'http://localhost:3000'
   });
 });
 
 // Serve frontend routes (legacy support)
 app.get('/dashboard', (req, res) => {
-  res.redirect('http://localhost:3000/dashboard');
+  res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard`);
 });
 
 app.get('/login', (req, res) => {
-  res.redirect('http://localhost:3000/login');
+  res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login`);
 });
 
 // Health check
