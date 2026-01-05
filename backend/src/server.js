@@ -88,12 +88,29 @@ app.use(session(sessionConfig));
 // Passport Initialization
 app.use(passport.initialize());
 app.use(passport.session());
-require('../config/passport');
+
+try {
+  require('../config/passport');
+  console.log('✅ Passport configuration loaded');
+} catch (error) {
+  console.error('❌ Passport configuration error:', error.message);
+}
 
 // MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/email-sender')
-  .then(() => console.log('MongoDB connected'))
-  .catch(err => console.log('MongoDB connection error:', err));
+async function connectMongoDB() {
+  try {
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/email-sender', {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log('✅ MongoDB connected successfully');
+  } catch (err) {
+    console.error('❌ MongoDB connection error:', err.message);
+    // Don't crash the server, but log the error
+  }
+}
+
+connectMongoDB();
 
 // Routes
 app.use('/api/auth', authRoutes);
