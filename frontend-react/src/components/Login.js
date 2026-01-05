@@ -9,7 +9,6 @@ import {
   FaUser, 
   FaEye, 
   FaEyeSlash,
-  FaArrowLeft,
   FaShieldAlt
 } from 'react-icons/fa';
 
@@ -17,13 +16,8 @@ const Login = () => {
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [showEmailLogin, setShowEmailLogin] = useState(false);
   const [isSignup, setIsSignup] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [showMobileLogin, setShowMobileLogin] = useState(false);
-  const [mobile, setMobile] = useState('');
-  const [otp, setOtp] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -38,17 +32,49 @@ const Login = () => {
     const urlParams = new URLSearchParams(location.search);
     const token = urlParams.get('token');
     const errorParam = urlParams.get('error');
+    const details = urlParams.get('details');
     
     console.log('Login component mounted, checking for token...', { token, isAuthenticated, errorParam });
     
     if (errorParam) {
-      setError('Authentication failed. Please try again.');
+      let errorMessage = 'Authentication failed. Please try again.';
+      
+      switch(errorParam) {
+        case 'auth_failed':
+          errorMessage = 'Google authentication failed. Please try again.';
+          break;
+        case 'no_user':
+          errorMessage = 'No user account found. Please contact support.';
+          break;
+        case 'config_error':
+          errorMessage = 'Server configuration error. Please contact support.';
+          break;
+        case 'token_error':
+          errorMessage = 'Token generation failed. Please try again.';
+          break;
+        case 'oauth_init_failed':
+          errorMessage = 'Google OAuth initialization failed. Please try again.';
+          break;
+        default:
+          if (details) {
+            errorMessage = `Authentication error: ${decodeURIComponent(details)}`;
+          }
+      }
+      
+      setError(errorMessage);
     }
     
     if (token) {
       console.log('Token found in URL, logging in...');
-      login(token);
-      navigate('/dashboard');
+      try {
+        login(token);
+        // Clear the URL parameters
+        window.history.replaceState({}, document.title, window.location.pathname);
+        navigate('/dashboard');
+      } catch (err) {
+        console.error('Token login failed:', err);
+        setError('Login failed. Please try again.');
+      }
     } else if (isAuthenticated) {
       console.log('User already authenticated, redirecting to dashboard...');
       navigate('/dashboard');
@@ -72,16 +98,45 @@ const Login = () => {
     setLoading(true);
     setError('');
 
+    // Basic validation
+    if (!formData.email || !formData.password) {
+      setError('Please fill in all required fields.');
+      setLoading(false);
+      return;
+    }
+
+    if (isSignup && !formData.name) {
+      setError('Please enter your full name.');
+      setLoading(false);
+      return;
+    }
+
     try {
       const endpoint = isSignup ? '/api/auth/register' : '/api/auth/login';
-      const response = await axios.post(endpoint, formData);
+      console.log('Submitting to:', endpoint, { email: formData.email });
+      
+      const response = await axios.post(endpoint, {
+        email: formData.email,
+        password: formData.password,
+        ...(isSignup && { name: formData.name, mobile: formData.mobile })
+      });
+      
+      console.log('Auth response:', response.data);
       
       if (response.data.token) {
         login(response.data.token);
         navigate('/dashboard');
+      } else {
+        setError('Authentication succeeded but no token received.');
       }
     } catch (error) {
-      setError(error.response?.data?.error || 'Authentication failed');
+      console.error('Auth error:', error);
+      
+      if (error.code === 'NETWORK_ERROR' || !error.response) {
+        setError('Network error. Please check your internet connection and try again.');
+      } else {
+        setError(error.response?.data?.error || 'Authentication failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

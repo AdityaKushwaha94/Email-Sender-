@@ -16,8 +16,8 @@ const emailRoutes = require('./routes/emailRoutes');
 const userRoutes = require('./routes/userRoutes');
 const { checkRedisHealth } = require('./utils/redisUtils');
 
-const app = express();
-app.set("trust proxy", 1);
+// const app = express();
+// app.set("trust proxy", 1);
 
 // Rate limiting middleware
 const limiter = rateLimit({
@@ -140,11 +140,7 @@ app.get('/health', async (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Server Error Details:');
-  console.error('URL:', req.url);
-  console.error('Method:', req.method);
-  console.error('Error Stack:', err.stack);
-  console.error('Error Message:', err.message);
+
   
   // Send different responses based on environment
   if (process.env.NODE_ENV === 'production') {

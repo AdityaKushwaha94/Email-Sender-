@@ -6,44 +6,108 @@ const auth = require('../middleware/auth');
 
 const router = express.Router();
 
-
-router.get('/google', (req, res, next) => {
-  // 
-  
-  passport.authenticate('google', {
-    scope: ['profile', 'email']
-  })(req, res, next);
+// Base auth route
+router.get('/', (req, res) => {
+  res.json({ 
+    message: 'Auth API is working',
+    endpoints: {
+      health: '/api/auth/health',
+      google: '/api/auth/google',
+      googleCallback: '/api/auth/google/callback',
+      register: 'POST /api/auth/register',
+      login: 'POST /api/auth/login',
+      me: 'GET /api/auth/me',
+      logout: 'POST /api/auth/logout'
+    },
+    timestamp: new Date().toISOString()
+  });
 });
 
-router.get('/google/callback', passport.authenticate('google', {
-  failureRedirect: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=auth_failed`
-}), (req, res) => {
+// Health check for auth routes
+router.get('/health', (req, res) => {
+  res.json({ 
+    message: 'Auth routes are working',
+    timestamp: new Date().toISOString(),
+    origin: req.get('origin')
+  });
+});
+
+// Google OAuth configuration test
+router.get('/google/config', (req, res) => {
+  res.json({
+    hasClientId: !!process.env.GOOGLE_CLIENT_ID,
+    hasClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
+    callbackUrl: process.env.GOOGLE_CALLBACK_URL,
+    frontendUrl: process.env.FRONTEND_URL,
+    backendUrl: process.env.BACKEND_URL,
+    jwtSecretExists: !!process.env.JWT_SECRET
+  });
+});
+
+router.get('/google', (req, res, next) => {
   try {
-   
+    console.log('Google OAuth initiation requested');
+    console.log('GOOGLE_CLIENT_ID exists:', !!process.env.GOOGLE_CLIENT_ID);
+    console.log('GOOGLE_CLIENT_SECRET exists:', !!process.env.GOOGLE_CLIENT_SECRET);
+    console.log('GOOGLE_CALLBACK_URL:', process.env.GOOGLE_CALLBACK_URL);
     
-    if (!req.user) {
-      console.error('OAuth callback: No user found in request');
-      return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=no_user`);
-    }
-
-    if (!process.env.JWT_SECRET) {
-      console.error('OAuth callback: JWT_SECRET not found in environment variables');
-      return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=config_error`);
-    }
-
-    const token = jwt.sign(
-      { userId: req.user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: '24h' }
-    );
-    
-    const redirectUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?token=${token}`;
-    
-    res.redirect(redirectUrl);
+    passport.authenticate('google', {
+      scope: ['profile', 'email']
+    })(req, res, next);
   } catch (error) {
-    console.error('OAuth callback error:', error);
-    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=callback_error`);
+    console.error('Google OAuth initiation error:', error);
+    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=oauth_init_failed`);
   }
+});
+
+router.get('/google/callback', (req, res, next) => {
+  console.log('Google OAuth callback received');
+  console.log('Query params:', req.query);
+  
+  passport.authenticate('google', {
+    failureRedirect: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=auth_failed`
+  }, (err, user, info) => {
+    if (err) {
+      console.error('Google OAuth authentication error:', err);
+      return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=auth_error&details=${encodeURIComponent(err.message)}`);
+    }
+    
+    if (!user) {
+      console.error('Google OAuth: No user returned', info);
+      return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=no_user&info=${encodeURIComponent(JSON.stringify(info))}`);
+    }
+    
+    // Manual login since we're using custom callback
+    req.logIn(user, (loginErr) => {
+      if (loginErr) {
+        console.error('Login error after OAuth:', loginErr);
+        return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=login_failed`);
+      }
+      
+      try {
+        console.log('Google OAuth successful for user:', user.email);
+        
+        if (!process.env.JWT_SECRET) {
+          console.error('JWT_SECRET not found in environment variables');
+          return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=config_error`);
+        }
+    
+        const token = jwt.sign(
+          { userId: user._id },
+          process.env.JWT_SECRET,
+          { expiresIn: '24h' }
+        );
+        
+        const redirectUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?token=${token}`;
+        console.log('Redirecting to:', redirectUrl);
+        
+        res.redirect(redirectUrl);
+      } catch (error) {
+        console.error('Token generation error:', error);
+        res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=token_error`);
+      }
+    });
+  })(req, res, next);
 });
 
 // Email/Password Registration
