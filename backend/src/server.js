@@ -33,6 +33,7 @@ const { getRedis, getEmailQueue, isRedisAvailable } = require('../config/redis')
 const authRoutes = require('./routes/authRoutes');
 const emailRoutes = require('./routes/emailRoutes');
 const userRoutes = require('./routes/userRoutes');
+const emailVerificationRoutes = require('./routes/emailVerificationRoutes');
 const { checkRedisHealth } = require('./utils/redisUtils');
 
 const app = express();
@@ -163,6 +164,7 @@ connectMongoDB();
 app.use('/api/auth', authRoutes);
 app.use('/api/emails', emailRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/email-verification', emailVerificationRoutes);
 
 // Root route - API status
 app.get('/', (req, res) => {

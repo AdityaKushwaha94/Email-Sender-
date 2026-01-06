@@ -24,20 +24,28 @@ router.post('/send-single', auth, async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    await sendSingleEmail({
+    const result = await sendSingleEmail(req.userId, {
       to,
       subject,
       message,
       name: name || 'Valued Customer'
     });
 
-    res.json({ success: true, message: 'Email sent successfully' });
+    res.json({ 
+      success: true, 
+      message: 'Email sent successfully',
+      details: {
+        to: result.to,
+        from: result.from,
+        messageId: result.messageId
+      }
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Send multiple emails (up to 10)
+// Send multiple emails (up to 100)
 router.post('/send-multiple', auth, async (req, res) => {
   try {
     const { subject, message, recipients } = req.body;
@@ -46,11 +54,11 @@ router.post('/send-multiple', auth, async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    if (recipients.length > 10) {
-      return res.status(400).json({ error: 'Maximum 10 recipients allowed' });
+    if (recipients.length > 100) {
+      return res.status(400).json({ error: 'Maximum 100 recipients allowed' });
     }
 
-    const results = await sendMultipleEmails({
+    const results = await sendMultipleEmails(req.userId, {
       subject,
       message,
       recipients
@@ -58,8 +66,14 @@ router.post('/send-multiple', auth, async (req, res) => {
 
     res.json({ 
       success: true, 
-      message: `Emails sent to ${results.sent} recipients`,
-      results 
+      message: `Emails sent to ${results.sent} out of ${results.total} recipients`,
+      results: {
+        sent: results.sent,
+        failed: results.failed,
+        total: results.total,
+        successEmails: results.successEmails,
+        errors: results.errors
+      }
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

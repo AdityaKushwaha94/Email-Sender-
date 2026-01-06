@@ -3,120 +3,130 @@ const EmailCampaign = require('../models/EmailCampaign');
 const User = require('../models/User');
 const { emailQueue, redis } = require('../../config/redis');
 
-// Create transporter function
-const createTransporter = async (user) => {
-  // Use user's custom email settings if available
-  if (user.emailCredentials && user.emailCredentials.smtpHost) {
-    return nodemailer.createTransport({
-      host: user.emailCredentials.smtpHost,
-      port: user.emailCredentials.smtpPort || 587,
-      secure: false,
-      auth: {
-        user: user.emailCredentials.senderEmail,
-        pass: user.emailCredentials.senderPassword,
-      },
-    });
-  } else {
-    // Use default Gmail SMTP
-    return nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
-      },
-    });
-  }
+// Create transporter function using system email
+const createTransport = async () => {
+  return nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD
+    }
+  });
 };
 
-// Send single email
-const sendSingleEmail = async ({ to, subject, message, name }) => {
+// Send single email using system email credentials
+const sendSingleEmail = async (userId, { to, subject, message, name }) => {
   try {
-    // For now, use system email credentials
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
-      },
-    });
+    // Get user
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      throw new Error('User not found');
+    }
+    
+    if (!user.emailCredentials?.isVerified) {
+      throw new Error('Please verify your email address first');
+    }
 
-    const personalizedMessage = message.replace(/{{name}}/g, name);
+    const transport = await createTransport();
+    const personalizedMessage = message.replace(/{{name}}/g, name || 'there');
 
     const mailOptions = {
-      from: process.env.EMAIL_USER,
+      from: `"${user.name}" <${process.env.EMAIL_USER}>`,
+      replyTo: user.emailCredentials.senderEmail, // Set reply-to as user's verified email
       to: to,
       subject: subject,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #2563eb;">Hello ${name}!</h2>
+          <h2 style="color: #2563eb;">Hello ${name || 'there'}!</h2>
           <div style="line-height: 1.6; white-space: pre-line;">
             ${personalizedMessage}
           </div>
           <hr style="margin: 20px 0; border: none; border-top: 1px solid #e5e7eb;">
           <p style="color: #6b7280; font-size: 14px;">
-            This email was sent via Email Sender Application
+            Sent by ${user.name} via Email Sender Platform
           </p>
         </div>
       `
     };
 
-    const result = await transporter.sendMail(mailOptions);
-    console.log(`✅ Single email sent to ${to}`);
-    return result;
+    const result = await transport.sendMail(mailOptions);
+    return {
+      success: true,
+      messageId: result.messageId,
+      to: to,
+      from: process.env.EMAIL_USER,
+      replyTo: user.emailCredentials.senderEmail
+    };
   } catch (error) {
-    console.error(`❌ Failed to send email to ${to}:`, error);
-    throw error;
+    throw new Error(`Failed to send email: ${error.message}`);
   }
 };
 
-// Send multiple emails (up to 10)
-const sendMultipleEmails = async ({ subject, message, recipients }) => {
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD,
-    },
-  });
+// Send multiple emails using user's verified credentials (up to 100)
+const sendMultipleEmails = async (userId, { subject, message, recipients }) => {
+  const user = await User.findById(userId).select('+emailCredentials.senderPassword');
+  
+  if (!user) {
+    throw new Error('User not found');
+  }
+  
+  if (!user.emailCredentials?.isVerified) {
+    throw new Error('Please verify your email credentials first');
+  }
+  
+  if (recipients.length > 100) {
+    throw new Error('Maximum 100 recipients allowed per batch');
+  }
 
+  const transport = await createTransport();
   const results = {
     sent: 0,
     failed: 0,
-    errors: []
+    total: recipients.length,
+    errors: [],
+    successEmails: []
   };
 
   for (const recipient of recipients) {
     try {
-      const personalizedMessage = message.replace(/{{name}}/g, recipient.name);
+      const personalizedMessage = message.replace(/{{name}}/g, recipient.name || 'there');
       
       const mailOptions = {
-        from: process.env.EMAIL_USER,
+        from: `"${user.name}" <${process.env.EMAIL_USER}>`,
+        replyTo: user.emailCredentials.senderEmail, // Set reply-to as user's verified email
         to: recipient.email,
         subject: subject,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #2563eb;">Hello ${recipient.name}!</h2>
+            <h2 style="color: #2563eb;">Hello ${recipient.name || 'there'}!</h2>
             <div style="line-height: 1.6; white-space: pre-line;">
               ${personalizedMessage}
             </div>
             <hr style="margin: 20px 0; border: none; border-top: 1px solid #e5e7eb;">
             <p style="color: #6b7280; font-size: 14px;">
-              This email was sent via Email Sender Application
+              Sent by ${user.name} via Email Sender Platform
             </p>
           </div>
         `
       };
 
-      await transporter.sendMail(mailOptions);
+      await transport.sendMail(mailOptions);
       results.sent++;
-      console.log(`✅ Email sent to ${recipient.email}`);
+      results.successEmails.push(recipient.email);
+      
+      // Add small delay between emails to avoid rate limiting
+      if (results.sent % 10 === 0) {
+        await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay every 10 emails
+      }
     } catch (error) {
       results.failed++;
       results.errors.push({
         email: recipient.email,
         error: error.message
       });
-      console.error(`❌ Failed to send email to ${recipient.email}:`, error);
     }
   }
 
@@ -212,7 +222,7 @@ const processCampaignDirectly = async (campaignId) => {
           `
         };
 
-        await transporter.sendMail(mailOptions);
+        await transport.sendMail(mailOptions);
         sent++;
         console.log(`✅ Email sent to ${recipient.email}`);
         
