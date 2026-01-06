@@ -22,7 +22,7 @@ const userSchema = new mongoose.Schema({
     trim: true,
     minlength: [2, 'Name must be at least 2 characters'],
     maxlength: [50, 'Name cannot exceed 50 characters'],
-    match: [/^[a-zA-Z\s]+$/, 'Name can only contain letters and spaces']
+    match: [/^[a-zA-Z0-9\s.-]+$/, 'Name can only contain letters, numbers, spaces, periods, and hyphens']
   },
   password: {
     type: String,
@@ -41,26 +41,35 @@ const userSchema = new mongoose.Schema({
     index: true
   },
   emailCredentials: {
-    smtpHost: {
-      type: String,
-      trim: true,
-      maxlength: [100, 'SMTP host too long']
-    },
-    smtpPort: {
-      type: Number,
-      min: [1, 'Invalid port number'],
-      max: [65535, 'Invalid port number']
-    },
     senderEmail: {
       type: String,
       trim: true,
       lowercase: true,
       maxlength: [100, 'Sender email too long']
     },
-    senderPassword: {
+    isVerified: {
+      type: Boolean,
+      default: false
+    },
+    verifiedAt: {
+      type: Date
+    }
+  },
+  emailVerification: {
+    otp: {
       type: String,
-      select: false,
-      maxlength: [200, 'Password too long']
+      select: false
+    },
+    otpExpiry: {
+      type: Date,
+      select: false
+    },
+    verificationAttempts: {
+      type: Number,
+      default: 0
+    },
+    lastVerificationAttempt: {
+      type: Date
     }
   },
   loginAttempts: {
@@ -132,6 +141,62 @@ userSchema.methods.resetLoginAttempts = function() {
   return this.updateOne({
     $unset: { loginAttempts: 1, lockUntil: 1 }
   });
+};
+
+// Email verification methods
+userSchema.methods.setEmailVerificationOTP = function(otp, expiry) {
+  this.emailVerification.otp = otp;
+  this.emailVerification.otpExpiry = expiry;
+  this.emailVerification.lastVerificationAttempt = new Date();
+  return this.save();
+};
+
+userSchema.methods.verifyEmailOTP = function(providedOTP) {
+  if (!this.emailVerification.otp || !this.emailVerification.otpExpiry) {
+    return false;
+  }
+  
+  // Check if OTP is expired
+  if (new Date() > this.emailVerification.otpExpiry) {
+    return false;
+  }
+  
+  // Check if OTP matches
+  return this.emailVerification.otp === providedOTP.toString();
+};
+
+userSchema.methods.markEmailAsVerified = function() {
+  this.emailCredentials.isVerified = true;
+  this.emailCredentials.verifiedAt = new Date();
+  this.emailVerification.otp = undefined;
+  this.emailVerification.otpExpiry = undefined;
+  this.emailVerification.verificationAttempts = 0;
+  return this.save();
+};
+
+userSchema.methods.incrementVerificationAttempts = function() {
+  this.emailVerification.verificationAttempts += 1;
+  this.emailVerification.lastVerificationAttempt = new Date();
+  return this.save();
+};
+
+userSchema.methods.canAttemptVerification = function() {
+  const maxAttempts = 5;
+  const lockoutDuration = 15 * 60 * 1000; // 15 minutes
+  
+  if (this.emailVerification.verificationAttempts >= maxAttempts) {
+    if (!this.emailVerification.lastVerificationAttempt) return false;
+    
+    const timeSinceLastAttempt = Date.now() - this.emailVerification.lastVerificationAttempt.getTime();
+    if (timeSinceLastAttempt < lockoutDuration) {
+      return false;
+    }
+    
+    // Reset attempts after lockout period
+    this.emailVerification.verificationAttempts = 0;
+  }
+  
+  return true;
 };
 
 module.exports = mongoose.model('User', userSchema);

@@ -5,11 +5,19 @@ import {
   FiUpload,
   FiBarChart2,
   FiSettings,
-  FiLogOut
+  FiLogOut,
+  FiShield
 } from "react-icons/fi";
 
 const Sidebar = ({ activeSection, setActiveSection }) => {
   const menuItems = [
+    {
+      id: "email-verification",
+      label: "Email Verification",
+      icon: FiShield,
+      color: "#f59e0b",
+      description: "Verify your email"
+    },
     {
       id: "single-email",
       label: "Single Email",
@@ -22,7 +30,7 @@ const Sidebar = ({ activeSection, setActiveSection }) => {
       label: "Multiple Emails",
       icon: FiUsers,
       color: "#059669",
-      description: "Send to ≤10 recipients"
+      description: "Send to ≤100 recipients"
     },
     {
       id: "bulk-email",
