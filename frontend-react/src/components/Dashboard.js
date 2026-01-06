@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
+import EmailVerification from './EmailVerification';
 import SingleEmail from './email/SingleEmail';
 import MultipleEmail from './email/MultipleEmail';
 import BulkEmail from './email/BulkEmail';
@@ -9,10 +10,12 @@ import Campaigns from './Campaigns';
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const [activeSection, setActiveSection] = useState('single-email');
+  const [activeSection, setActiveSection] = useState('email-verification');
 
   const renderContent = () => {
     switch (activeSection) {
+      case 'email-verification':
+        return <EmailVerification />;
       case 'single-email':
         return <SingleEmail />;
       case 'multiple-email':
@@ -22,12 +25,14 @@ const Dashboard = () => {
       case 'campaigns':
         return <Campaigns />;
       default:
-        return <SingleEmail />;
+        return <EmailVerification />;
     }
   };
 
   const getSectionTitle = () => {
     switch (activeSection) {
+      case 'email-verification':
+        return 'Email Verification';
       case 'single-email':
         return 'Send Single Email';
       case 'multiple-email':
@@ -37,7 +42,7 @@ const Dashboard = () => {
       case 'campaigns':
         return 'Campaign Analytics';
       default:
-        return 'Email Dashboard';
+        return 'Email Verification';
     }
   };
 
