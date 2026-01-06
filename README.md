@@ -198,7 +198,6 @@ The application handles bulk email sending with:
 - Session management
 - Secure password storage
 
-## 📝 Excel File Format
 
 Your Excel file should have the following columns:
 ```
