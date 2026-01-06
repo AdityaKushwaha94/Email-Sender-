@@ -89,15 +89,32 @@ app.use('/api/emails/campaigns', emailLimiter);
 app.use(mongoSanitize()); // Prevent NoSQL injection
 app.use(hpp()); // Prevent HTTP Parameter Pollution
 
-// CORS for local development
-app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000'
-  ],
+// CORS for production and development
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      process.env.FRONTEND_URL,
+      'https://your-frontend.vercel.app' // Replace with your actual Vercel domain
+    ].filter(Boolean); // Remove undefined values
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
-  optionsSuccessStatus: 200
-}));
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+};
+
+app.use(cors(corsOptions));
 
 // Body parsing with size limits
 app.use(express.json({ limit: '10mb' }));
@@ -114,7 +131,7 @@ const sessionConfig = {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax'
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
   }
 };
 
