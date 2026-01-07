@@ -37,7 +37,8 @@ router.get('/health', (req, res) => {
 
 router.get('/google', (req, res, next) => {
   if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
-    return res.redirect('http://localhost:3000/login?error=oauth_not_configured');
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    return res.redirect(`${frontendUrl}/login?error=oauth_not_configured`);
   }
   
   passport.authenticate('google', {
@@ -46,20 +47,22 @@ router.get('/google', (req, res, next) => {
 });
 
 router.get('/google/callback', (req, res, next) => {
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+  
   passport.authenticate('google', {
-    failureRedirect: 'http://localhost:3000/login?error=auth_failed'
+    failureRedirect: `${frontendUrl}/login?error=auth_failed`
   }, (err, user, info) => {
     if (err) {
-      return res.redirect('http://localhost:3000/login?error=auth_error');
+      return res.redirect(`${frontendUrl}/login?error=auth_error`);
     }
     
     if (!user) {
-      return res.redirect('http://localhost:3000/login?error=auth_failed');
+      return res.redirect(`${frontendUrl}/login?error=auth_failed`);
     }
     
     req.logIn(user, (loginErr) => {
       if (loginErr) {
-        return res.redirect('http://localhost:3000/login?error=login_failed');
+        return res.redirect(`${frontendUrl}/login?error=login_failed`);
       }
       
       try {
@@ -69,9 +72,9 @@ router.get('/google/callback', (req, res, next) => {
           { expiresIn: '24h' }
         );
         
-        res.redirect(`http://localhost:3000/login?token=${token}`);
+        res.redirect(`${frontendUrl}/login?token=${token}`);
       } catch (error) {
-        res.redirect('http://localhost:3000/login?error=token_error');
+        res.redirect(`${frontendUrl}/login?error=token_error`);
       }
     });
   })(req, res, next);

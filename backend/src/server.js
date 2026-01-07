@@ -71,6 +71,7 @@ const authLimiter = rateLimit({
   message: { error: 'Too many authentication attempts, please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.ip === '127.0.0.1' || req.ip === '::1' // Skip for localhost in development
 });
 
 const emailLimiter = rateLimit({
@@ -98,11 +99,10 @@ const corsOptions = {
     const allowedOrigins = [
       'http://localhost:3000',
       'http://127.0.0.1:3000',
-      process.env.FRONTEND_URL,
-      'https://your-frontend.vercel.app' // Replace with your actual Vercel domain
+      process.env.FRONTEND_URL
     ].filter(Boolean); // Remove undefined values
     
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
