@@ -5,10 +5,9 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "build": "npm install",
+    "build": "echo 'Build completed'",
     "dev": "nodemon src/server.js",
-    "worker": "node src/workers/emailWorker.js",
-    "postinstall": "npm run build"
+    "worker": "node src/workers/emailWorker.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
