@@ -28,57 +28,61 @@ const Login = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Check for errors in URL
-    const urlParams = new URLSearchParams(location.search);
-    const token = urlParams.get('token');
-    const errorParam = urlParams.get('error');
-    const details = urlParams.get('details');
-    
-    console.log('Login component mounted, checking for token...', { token, isAuthenticated, errorParam });
-    
-    if (errorParam) {
-      let errorMessage = 'Authentication failed. Please try again.';
+    const handleAuth = async () => {
+      // Check for errors in URL
+      const urlParams = new URLSearchParams(location.search);
+      const token = urlParams.get('token');
+      const errorParam = urlParams.get('error');
+      const details = urlParams.get('details');
       
-      switch(errorParam) {
-        case 'auth_failed':
-          errorMessage = 'Google authentication failed. Please try again.';
-          break;
-        case 'no_user':
-          errorMessage = 'No user account found. Please contact support.';
-          break;
-        case 'config_error':
-          errorMessage = 'Server configuration error. Please contact support.';
-          break;
-        case 'token_error':
-          errorMessage = 'Token generation failed. Please try again.';
-          break;
-        case 'oauth_init_failed':
-          errorMessage = 'Google OAuth initialization failed. Please try again.';
-          break;
-        default:
-          if (details) {
-            errorMessage = `Authentication error: ${decodeURIComponent(details)}`;
-          }
+      console.log('Login component mounted, checking for token...', { token, isAuthenticated, errorParam });
+      
+      if (errorParam) {
+        let errorMessage = 'Authentication failed. Please try again.';
+        
+        switch(errorParam) {
+          case 'auth_failed':
+            errorMessage = 'Google authentication failed. Please try again.';
+            break;
+          case 'no_user':
+            errorMessage = 'No user account found. Please contact support.';
+            break;
+          case 'config_error':
+            errorMessage = 'Server configuration error. Please contact support.';
+            break;
+          case 'token_error':
+            errorMessage = 'Token generation failed. Please try again.';
+            break;
+          case 'oauth_init_failed':
+            errorMessage = 'Google OAuth initialization failed. Please try again.';
+            break;
+          default:
+            if (details) {
+              errorMessage = `Authentication error: ${decodeURIComponent(details)}`;
+            }
+        }
+        
+        setError(errorMessage);
       }
       
-      setError(errorMessage);
-    }
-    
-    if (token) {
-      console.log('Token found in URL, logging in...');
-      try {
-        await login(token);
-        // Clear the URL parameters
-        window.history.replaceState({}, document.title, window.location.pathname);
+      if (token) {
+        console.log('Token found in URL, logging in...');
+        try {
+          await login(token);
+          // Clear the URL parameters
+          window.history.replaceState({}, document.title, window.location.pathname);
+          navigate('/dashboard', { replace: true });
+        } catch (err) {
+          console.error('Token login failed:', err);
+          setError('Login failed. Please try again.');
+        }
+      } else if (isAuthenticated && !token) {
+        console.log('User already authenticated, redirecting to dashboard...');
         navigate('/dashboard', { replace: true });
-      } catch (err) {
-        console.error('Token login failed:', err);
-        setError('Login failed. Please try again.');
       }
-    } else if (isAuthenticated && !token) {
-      console.log('User already authenticated, redirecting to dashboard...');
-      navigate('/dashboard', { replace: true });
-    }
+    };
+
+    handleAuth();
   }, [location, login, navigate, isAuthenticated]);
 
   const handleGoogleLogin = () => {
