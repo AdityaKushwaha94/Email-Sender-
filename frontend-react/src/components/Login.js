@@ -82,7 +82,7 @@ const Login = () => {
   }, [location, login, navigate, isAuthenticated]);
 
   const handleGoogleLogin = () => {
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://email-sender-gefj.onrender.com';
     window.location.href = `${API_BASE_URL}/api/auth/google`;
   };
 
