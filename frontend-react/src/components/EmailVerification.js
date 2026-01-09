@@ -1,6 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
+// Configure axios for this component
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://email-sender-gefj.onrender.com';
+const axiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 30000, // 30 second timeout
+  withCredentials: true
+});
+
+// Add auth token to requests
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 const EmailVerification = () => {
   const [step, setStep] = useState(1); // 1: Setup, 2: OTP, 3: Verified
   const [formData, setFormData] = useState({
@@ -19,7 +39,7 @@ const EmailVerification = () => {
 
   const fetchVerificationStatus = async () => {
     try {
-      const response = await axios.get('/api/email-verification/status');
+      const response = await axiosInstance.get('/api/email-verification/status');
       setVerificationStatus(response.data);
       
       if (response.data.isVerified) {
@@ -46,7 +66,7 @@ const EmailVerification = () => {
     setAlert({ type: '', message: '' });
 
     try {
-      await axios.post('/api/email-verification/send-otp', formData);
+      await axiosInstance.post('/api/email-verification/send-otp', formData);
       setAlert({ 
         type: 'success', 
         message: `OTP sent successfully to ${formData.email}! Check your inbox.` 
@@ -68,7 +88,7 @@ const EmailVerification = () => {
     setAlert({ type: '', message: '' });
 
     try {
-      await axios.post('/api/email-verification/verify-otp', { otp });
+      await axiosInstance.post('/api/email-verification/verify-otp', { otp });
       setAlert({ 
         type: 'success', 
         message: 'Email verified successfully! You can now send emails from your account.' 
@@ -92,7 +112,10 @@ const EmailVerification = () => {
     setAlert({ type: '', message: '' });
 
     try {
-      await axios.post('/api/email-verification/resend-otp');
+      console.log('Attempting to resend OTP...');
+      const response = await axiosInstance.post('/api/email-verification/resend-otp');
+      console.log('Resend OTP response:', response.data);
+      
       setAlert({ 
         type: 'success', 
         message: 'OTP resent successfully! Check your inbox.' 
@@ -111,9 +134,10 @@ const EmailVerification = () => {
       }, 1000);
       
     } catch (error) {
+      console.error('Resend OTP error:', error);
       setAlert({ 
         type: 'error', 
-        message: error.response?.data?.error || 'Failed to resend OTP' 
+        message: error.response?.data?.error || error.message || 'Failed to resend OTP' 
       });
     } finally {
       setLoading(false);
@@ -127,7 +151,7 @@ const EmailVerification = () => {
 
     setLoading(true);
     try {
-      await axios.delete('/api/email-verification/remove');
+      await axiosInstance.delete('/api/email-verification/remove');
       setAlert({ 
         type: 'success', 
         message: 'Email credentials removed successfully.' 

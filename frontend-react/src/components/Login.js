@@ -67,17 +67,17 @@ const Login = () => {
     if (token) {
       console.log('Token found in URL, logging in...');
       try {
-        login(token);
+        await login(token);
         // Clear the URL parameters
         window.history.replaceState({}, document.title, window.location.pathname);
-        navigate('/dashboard');
+        navigate('/dashboard', { replace: true });
       } catch (err) {
         console.error('Token login failed:', err);
         setError('Login failed. Please try again.');
       }
-    } else if (isAuthenticated) {
+    } else if (isAuthenticated && !token) {
       console.log('User already authenticated, redirecting to dashboard...');
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     }
   }, [location, login, navigate, isAuthenticated]);
 

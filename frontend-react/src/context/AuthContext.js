@@ -83,11 +83,19 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = (token) => {
+  const login = async (token) => {
     localStorage.setItem('token', token);
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     setIsAuthenticated(true);
-    checkAuth();
+    
+    // Fetch user data after setting token
+    try {
+      const response = await axios.get('/api/auth/me');
+      setUser(response.data);
+    } catch (error) {
+      console.error('Failed to fetch user data:', error);
+      // Don't clear auth state here as token might still be valid
+    }
   };
 
   const logout = () => {
