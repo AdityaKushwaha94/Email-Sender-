@@ -64,6 +64,44 @@ router.get('/status', auth, async (req, res) => {
   }
 });
 
+// Test email configuration endpoint (for debugging)
+router.get('/test-email', auth, async (req, res) => {
+  try {
+    console.log('Testing email configuration...');
+    console.log('EMAIL_USER:', process.env.EMAIL_USER);
+    console.log('EMAIL_PASSWORD configured:', !!process.env.EMAIL_PASSWORD);
+    
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+      return res.status(500).json({
+        error: 'Email credentials not configured'
+      });
+    }
+    
+    const nodemailer = require('nodemailer');
+    
+    const transport = nodemailer.createTransporter({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD
+      }
+    });
+    
+    await transport.verify();
+    
+    res.json({
+      message: 'Email configuration is working properly',
+      emailUser: process.env.EMAIL_USER
+    });
+  } catch (error) {
+    console.error('Email test failed:', error);
+    res.status(500).json({
+      error: 'Email configuration test failed',
+      details: process.env.NODE_ENV === 'development' ? error.message : 'Please check server logs'
+    });
+  }
+});
+
 // Step 1: Submit email and send OTP
 router.post('/send-otp', verificationLimiter, auth, emailValidation, handleValidationErrors, async (req, res) => {
   try {
@@ -96,10 +134,12 @@ router.post('/send-otp', verificationLimiter, auth, emailValidation, handleValid
     await user.setEmailVerificationOTP(otp, expiry);
 
     // Send OTP to user's email using system email
+    console.log(`Attempting to send OTP to ${email} for user ${user.name}`);
     const emailSent = await sendOTPEmail(email, otp, user.name);
     if (!emailSent) {
+      console.error(`Failed to send OTP email to ${email}`);
       return res.status(500).json({
-        error: 'Failed to send verification email. Please try again.'
+        error: 'Failed to send verification email. Please check your email address and try again.'
       });
     }
 
@@ -195,10 +235,12 @@ router.post('/resend-otp', verificationLimiter, auth, async (req, res) => {
     await user.setEmailVerificationOTP(otp, expiry);
 
     // Send OTP
+    console.log(`Resending OTP to ${user.emailCredentials.senderEmail} for user ${user.name}`);
     const emailSent = await sendOTPEmail(user.emailCredentials.senderEmail, otp, user.name);
     if (!emailSent) {
+      console.error(`Failed to resend OTP email to ${user.emailCredentials.senderEmail}`);
       return res.status(500).json({
-        error: 'Failed to resend verification email. Please try again.'
+        error: 'Failed to resend verification email. Please check your email address and try again.'
       });
     }
 

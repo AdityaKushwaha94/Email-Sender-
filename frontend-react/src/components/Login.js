@@ -56,6 +56,9 @@ const Login = () => {
           case 'oauth_init_failed':
             errorMessage = 'Google OAuth initialization failed. Please try again.';
             break;
+          case 'oauth_not_configured':
+            errorMessage = 'Google OAuth is not properly configured. Please contact support.';
+            break;
           default:
             if (details) {
               errorMessage = `Authentication error: ${decodeURIComponent(details)}`;
@@ -63,6 +66,9 @@ const Login = () => {
         }
         
         setError(errorMessage);
+        // Clear the URL parameters to remove error from URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+        return;
       }
       
       if (token) {
@@ -71,19 +77,23 @@ const Login = () => {
           await login(token);
           // Clear the URL parameters
           window.history.replaceState({}, document.title, window.location.pathname);
-          navigate('/dashboard', { replace: true });
+          setTimeout(() => {
+            navigate('/dashboard', { replace: true });
+          }, 100);
         } catch (err) {
           console.error('Token login failed:', err);
           setError('Login failed. Please try again.');
         }
-      } else if (isAuthenticated && !token) {
+      } else if (isAuthenticated && !token && location.pathname === '/login') {
         console.log('User already authenticated, redirecting to dashboard...');
-        navigate('/dashboard', { replace: true });
+        setTimeout(() => {
+          navigate('/dashboard', { replace: true });
+        }, 100);
       }
     };
 
     handleAuth();
-  }, [location, login, navigate, isAuthenticated]);
+  }, [location.search, login, navigate, isAuthenticated]);
 
   const handleGoogleLogin = () => {
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://email-sender-gefj.onrender.com';

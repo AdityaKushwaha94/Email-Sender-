@@ -39,11 +39,18 @@ const verifyOTP = (storedOTP, storedExpiry, providedOTP) => {
  */
 const sendOTPEmail = async (toEmail, otp, userName = 'User') => {
   try {
-    // Create system transporter
+    console.log('Attempting to send OTP email to:', toEmail);
+    console.log('Email user:', process.env.EMAIL_USER);
+    console.log('Email password configured:', !!process.env.EMAIL_PASSWORD);
+
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+      console.error('Email credentials not configured');
+      return false;
+    }
+
+    // Create system transporter with Gmail service
     const transport = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
+      service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD
@@ -80,9 +87,15 @@ const sendOTPEmail = async (toEmail, otp, userName = 'User') => {
     };
 
     await transport.sendMail(mailOptions);
+    console.log('OTP email sent successfully');
     return true;
   } catch (error) {
     console.error('Error sending OTP email:', error);
+    console.error('Error details:', {
+      code: error.code,
+      message: error.message,
+      response: error.response
+    });
     return false;
   }
 };
