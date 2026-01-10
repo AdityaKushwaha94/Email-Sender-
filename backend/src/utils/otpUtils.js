@@ -44,7 +44,7 @@ const sendOTPEmail = async (toEmail, otp, userName = 'User') => {
     }
 
     // Simple Gmail transporter
-    const transport = nodemailer.createTransporter({
+    const transport = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER,

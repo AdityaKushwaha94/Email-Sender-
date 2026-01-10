@@ -331,7 +331,7 @@ router.get('/debug-email-service', auth, async (req, res) => {
 
     const nodemailer = require('nodemailer');
 
-    const transport = nodemailer.createTransporter({
+    const transport = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER,
