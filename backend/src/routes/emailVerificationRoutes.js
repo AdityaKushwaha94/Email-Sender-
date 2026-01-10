@@ -162,10 +162,10 @@ router.post('/send-otp', verificationLimiter, auth, emailValidation, handleValid
     await user.setEmailVerificationOTP(otp, expiry);
 
     // Send OTP to user's email using system email
-    const emailSent = await sendOTPEmail(email, otp, user.name);
+    const emailSent = await sendOTPEmail(email, otp, user.name || 'User');
     if (!emailSent) {
       return res.status(500).json({
-        error: 'Failed to send verification email. This could be due to:\n• Email service configuration issue\n• Invalid email address\n• Network connectivity problem\n\nPlease verify your email address and try again.'
+        error: 'Failed to send verification email. Please try again.'
       });
     }
 
@@ -176,18 +176,11 @@ router.post('/send-otp', verificationLimiter, auth, emailValidation, handleValid
     });
 
   } catch (error) {
-    console.error('Send OTP error:', error);
+    console.error('Send OTP error:', error.message);
     
-    // Handle specific validation errors
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({
-        error: 'Validation failed',
-        details: Object.values(error.errors).map(err => err.message)
-      });
-    }
     
     res.status(500).json({
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Failed to send OTP'
+      error: 'Failed to send OTP. Please try again.'
     });
   }
 });
@@ -312,8 +305,63 @@ router.delete('/remove', auth, async (req, res) => {
   }
 });
 
-// Test route for email sending functionality
-router.post('/test-email', async (req, res) => {
+// Quick debug endpoint to test email service in isolation
+// ...existing code...
+
+// Quick debug endpoint to test email service in isolation
+router.get('/debug-email-service', auth, async (req, res) => {
+  try {
+    console.log('[DEBUG] Email service debug request initiated...');
+    
+    // Check environment variables
+    const emailEnv = {
+      EMAIL_USER: process.env.EMAIL_USER || 'NOT_SET',
+      EMAIL_PASSWORD_LENGTH: process.env.EMAIL_PASSWORD?.length || 0,
+      NODE_ENV: process.env.NODE_ENV || 'NOT_SET'
+    };
+    
+    console.log('[DEBUG] Environment check:', emailEnv);
+    
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+      return res.status(500).json({
+        error: 'Email credentials not configured in environment',
+        details: emailEnv
+      });
+    }
+
+    const nodemailer = require('nodemailer');
+
+    const transport = nodemailer.createTransporter({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD
+      },
+      connectionTimeout: 10000,
+      socketTimeout: 10000
+    });
+
+    console.log('[DEBUG] Testing connection...');
+    await transport.verify();
+    console.log('[DEBUG] Connection successful');
+
+    res.json({
+      message: 'Email service is working properly',
+      environment: emailEnv,
+      status: 'connection_verified'
+    });
+
+  } catch (error) {
+    console.error('[DEBUG] Email service error:', error);
+    res.status(500).json({ 
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+});
+
+// Test send email endpoint
+router.post('/test-send-email', auth, async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) {
@@ -344,5 +392,7 @@ router.post('/test-email', async (req, res) => {
     });
   }
 });
+
+// ...existing code...
 
 module.exports = router;

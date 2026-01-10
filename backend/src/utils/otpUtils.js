@@ -43,8 +43,54 @@ const sendOTPEmail = async (toEmail, otp, userName = 'User') => {
       throw new Error('Email service not configured. Missing EMAIL_USER or EMAIL_PASSWORD.');
     }
 
-    // Create system transporter with Gmail service
-    const transport = nodemailer.createTransport({
+    // Simple Gmail transporter
+    const transport = nodemailer.createTransporter({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD
+      }
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: toEmail,
+      subject: 'Email Verification - OTP Code',
+      text: `Hello ${userName},
+
+You requested to verify your email address for sending emails through our platform.
+
+Your verification code is: ${otp}
+
+Important:
+- This code will expire in 5 minutes
+- Do not share this code with anyone
+- Use this code to verify your email sending credentials
+
+If you didn't request this verification, please ignore this email.
+
+Email Sender Platform`
+    };
+
+    await transport.sendMail(mailOptions);
+    return true;
+    } catch (error) {
+      console.error('Email send error:', error.message);
+      return false;
+    }
+  };
+  
+  /**
+   * Send OTP to user's email using system email with enhanced error handling
+   */
+  const sendOTPEmailEnhanced = async (toEmail, otp, userName = 'User') => {
+    try {
+      if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+        throw new Error('Email service not configured. Missing EMAIL_USER or EMAIL_PASSWORD.');
+      }
+  
+      // Create system transporter with Gmail service
+      const transport = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER,
@@ -59,6 +105,23 @@ const sendOTPEmail = async (toEmail, otp, userName = 'User') => {
       socketTimeout: 10000 // 10 seconds
     });
 
+    console.log('[EMAIL] Testing transporter connection...');
+    
+    // Verify the connection before attempting to send
+    try {
+      await transport.verify();
+      console.log('[EMAIL] Transporter verified successfully');
+    } catch (verifyError) {
+      console.error('[EMAIL] Transporter verification FAILED:', {
+        code: verifyError.code,
+        message: verifyError.message,
+        response: verifyError.response,
+        command: verifyError.command
+      });
+      throw new Error(`Gmail connection failed: ${verifyError.message}`);
+    }
+
+    console.log('[EMAIL] Preparing mail options...');
     const mailOptions = {
       from: `"Email Sender Verification" <${process.env.EMAIL_USER}>`,
       to: toEmail,
@@ -88,30 +151,49 @@ const sendOTPEmail = async (toEmail, otp, userName = 'User') => {
       `
     };
 
+    console.log(`[EMAIL] Mail options prepared - From: ${mailOptions.from}, To: ${mailOptions.to}`);
+    console.log('[EMAIL] Initiating email send with timeout protection...');
+
     // Add timeout to the email sending operation
     const emailPromise = transport.sendMail(mailOptions);
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Email send timeout')), 15000)
+      setTimeout(() => reject(new Error('Email send timeout after 15 seconds')), 15000)
     );
 
-    await Promise.race([emailPromise, timeoutPromise]);
+    const result = await Promise.race([emailPromise, timeoutPromise]);
+    console.log('[EMAIL] Email sent successfully:', {
+      messageId: result.messageId,
+      response: result.response,
+      to: toEmail
+    });
+    
     return true;
   } catch (error) {
-    // Log error details for debugging but don't expose sensitive info
-    if (process.env.NODE_ENV === 'development') {
-      console.error('OTP Email Error:', {
-        code: error.code,
-        message: error.message,
-        command: error.command,
-        stack: error.stack
-      });
-    }
+    console.error('[EMAIL] Send operation FAILED:', {
+      to: toEmail,
+      code: error.code,
+      message: error.message,
+      response: error.response,
+      command: error.command,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : 'Hidden in production',
+      timestamp: new Date().toISOString()
+    });
     
-    // Handle specific Gmail errors
+    // Handle specific Gmail errors with detailed logging
     if (error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT') {
-      console.error('Gmail connection error:', error.message);
+      console.error(`[EMAIL] Network error for ${toEmail}:`, error.message);
+    } else if (error.code === 'EAUTH') {
+      console.error('[EMAIL] Authentication failed - check Gmail credentials and app password');
+    } else if (error.code === 'EMESSAGE') {
+      console.error(`[EMAIL] Message error for ${toEmail}:`, error.message);
     } else if (error.message && error.message.includes('rate')) {
-      console.error('Gmail rate limit error:', error.message);
+      console.error(`[EMAIL] Rate limit exceeded for ${toEmail}`);
+    } else if (error.message && error.message.includes('timeout')) {
+      console.error(`[EMAIL] Timeout sending to ${toEmail}`);
+    } else if (error.response) {
+      console.error(`[EMAIL] SMTP error for ${toEmail}:`, error.response);
+    } else {
+      console.error(`[EMAIL] Unknown error for ${toEmail}:`, error.message);
     }
     
     return false;

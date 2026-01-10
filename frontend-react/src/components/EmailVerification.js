@@ -208,16 +208,34 @@ const EmailVerification = ({ onVerificationComplete }) => {
 
   const testEmailConfig = async () => {
     setLoading(true);
+    setAlert({ type: '', message: '' });
+    
     try {
-      const response = await axiosInstance.get('/api/email-verification/test-email');
+      console.log('Testing email service configuration...');
+      const response = await axiosInstance.get('/api/email-verification/debug-email-service');
+      
+      console.log('Email service test result:', response.data);
       setAlert({
         type: 'success',
-        message: `Email configuration is working! Using: ${response.data.emailUser}`
+        message: `✅ Email service is working! Configuration: ${response.data.config.emailUser}`
       });
     } catch (error) {
+      console.error('Email service test failed:', error);
+      
+      let errorMessage = 'Email service test failed';
+      if (error.response?.data) {
+        const data = error.response.data;
+        errorMessage = `❌ ${data.error || error.message}`;
+        if (data.code) {
+          errorMessage += ` (Code: ${data.code})`;
+        }
+      } else {
+        errorMessage = `❌ ${error.message}`;
+      }
+      
       setAlert({
         type: 'error',
-        message: `Email configuration error: ${error.response?.data?.error || error.message}`
+        message: errorMessage
       });
     } finally {
       setLoading(false);
