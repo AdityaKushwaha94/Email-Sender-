@@ -21,7 +21,7 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-const EmailVerification = () => {
+const EmailVerification = ({ onVerificationComplete }) => {
   const [step, setStep] = useState(1); // 1: Setup, 2: OTP, 3: Verified
   const [formData, setFormData] = useState({
     email: ''
@@ -45,12 +45,18 @@ const EmailVerification = () => {
       if (response.data.isVerified) {
         setStep(3);
         setFormData({ email: response.data.senderEmail || '' });
-      } else if (response.data.hasEmailCredentials) {
-        setStep(2);
-        setFormData({ email: response.data.senderEmail || '' });
+      } else {
+        // Always start at step 1 for unverified users
+        setStep(1);
+        if (response.data.senderEmail) {
+          setFormData({ email: response.data.senderEmail });
+        }
       }
     } catch (error) {
-      console.error('Failed to fetch verification status:', error);
+      setAlert({ 
+        type: 'error', 
+        message: 'Failed to load verification status' 
+      });
     }
   };
 
@@ -95,6 +101,13 @@ const EmailVerification = () => {
       });
       setStep(3);
       fetchVerificationStatus(); // Refresh status
+      
+      // Call the completion callback if provided
+      if (onVerificationComplete) {
+        setTimeout(() => {
+          onVerificationComplete();
+        }, 2000); // Give user time to see success message
+      }
     } catch (error) {
       setAlert({ 
         type: 'error', 
@@ -112,9 +125,7 @@ const EmailVerification = () => {
     setAlert({ type: '', message: '' });
 
     try {
-      console.log('Attempting to resend OTP...');
       const response = await axiosInstance.post('/api/email-verification/resend-otp');
-      console.log('Resend OTP response:', response.data);
       
       setAlert({ 
         type: 'success', 
@@ -134,10 +145,33 @@ const EmailVerification = () => {
       }, 1000);
       
     } catch (error) {
-      console.error('Resend OTP error:', error);
       setAlert({ 
         type: 'error', 
         message: error.response?.data?.error || error.message || 'Failed to resend OTP' 
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditEmail = () => {
+    setStep(1);
+    setOtp('');
+    setAlert({ type: '', message: '' });
+  };
+
+  const testEmailConfig = async () => {
+    setLoading(true);
+    try {
+      const response = await axiosInstance.get('/api/email-verification/test-email');
+      setAlert({
+        type: 'success',
+        message: `Email configuration is working! Using: ${response.data.emailUser}`
+      });
+    } catch (error) {
+      setAlert({
+        type: 'error',
+        message: `Email configuration error: ${error.response?.data?.error || error.message}`
       });
     } finally {
       setLoading(false);
@@ -400,6 +434,23 @@ const EmailVerification = () => {
           {loading ? '🔄 Sending Code...' : '📨 Send Verification Code'}
         </button>
       </form>
+      
+      {process.env.NODE_ENV === 'development' && (
+        <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+          <button 
+            onClick={testEmailConfig}
+            disabled={loading}
+            style={{
+              ...styles.button,
+              ...styles.buttonSecondary,
+              fontSize: '0.75rem',
+              padding: '0.5rem 1rem'
+            }}
+          >
+            🔧 Test Email Configuration
+          </button>
+        </div>
+      )}
     </div>
   );
 
@@ -439,14 +490,27 @@ const EmailVerification = () => {
         </button>
       </form>
 
-      <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+      <div style={{ marginTop: '1rem', textAlign: 'center', display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+        <button 
+          onClick={handleEditEmail}
+          style={{
+            ...styles.button,
+            ...styles.buttonSecondary,
+            flex: '1',
+            maxWidth: '200px'
+          }}
+        >
+          ✏️ Edit Email
+        </button>
         <button 
           onClick={handleResendOTP}
           disabled={resendCooldown > 0}
           style={{
             ...styles.button,
             ...styles.buttonSecondary,
-            opacity: resendCooldown > 0 ? 0.5 : 1
+            opacity: resendCooldown > 0 ? 0.5 : 1,
+            flex: '1',
+            maxWidth: '200px'
           }}
         >
           {resendCooldown > 0 

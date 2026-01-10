@@ -59,10 +59,8 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuth = async () => {
     const token = localStorage.getItem('token');
-    console.log('Checking auth, token:', token);
     
     if (!token) {
-      console.log('No token found, user not authenticated');
       setLoading(false);
       return;
     }
@@ -70,11 +68,9 @@ export const AuthProvider = ({ children }) => {
     try {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       const response = await axios.get('/api/auth/me');
-      console.log('Auth check successful, user:', response.data);
       setUser(response.data);
       setIsAuthenticated(true);
     } catch (error) {
-      console.error('Auth check failed:', error);
       localStorage.removeItem('token');
       delete axios.defaults.headers.common['Authorization'];
       setIsAuthenticated(false);
@@ -93,7 +89,6 @@ export const AuthProvider = ({ children }) => {
       const response = await axios.get('/api/auth/me');
       setUser(response.data);
     } catch (error) {
-      console.error('Failed to fetch user data:', error);
       // Don't clear auth state here as token might still be valid
     }
   };

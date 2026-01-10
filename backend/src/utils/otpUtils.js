@@ -39,13 +39,8 @@ const verifyOTP = (storedOTP, storedExpiry, providedOTP) => {
  */
 const sendOTPEmail = async (toEmail, otp, userName = 'User') => {
   try {
-    console.log('Attempting to send OTP email to:', toEmail);
-    console.log('Email user:', process.env.EMAIL_USER);
-    console.log('Email password configured:', !!process.env.EMAIL_PASSWORD);
-
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-      console.error('Email credentials not configured');
-      return false;
+      throw new Error('Email service not configured. Missing EMAIL_USER or EMAIL_PASSWORD.');
     }
 
     // Create system transporter with Gmail service
@@ -54,7 +49,12 @@ const sendOTPEmail = async (toEmail, otp, userName = 'User') => {
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD
-      }
+      },
+      // Add timeout and connection options for production
+      pool: true,
+      maxConnections: 1,
+      rateDelta: 20000,
+      rateLimit: 5
     });
 
     const mailOptions = {
@@ -87,15 +87,16 @@ const sendOTPEmail = async (toEmail, otp, userName = 'User') => {
     };
 
     await transport.sendMail(mailOptions);
-    console.log('OTP email sent successfully');
     return true;
   } catch (error) {
-    console.error('Error sending OTP email:', error);
-    console.error('Error details:', {
-      code: error.code,
-      message: error.message,
-      response: error.response
-    });
+    // Log error details for debugging but don't expose sensitive info
+    if (process.env.NODE_ENV === 'development') {
+      console.error('OTP Email Error:', {
+        code: error.code,
+        message: error.message,
+        command: error.command
+      });
+    }
     return false;
   }
 };

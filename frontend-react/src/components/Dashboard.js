@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
@@ -7,25 +7,87 @@ import SingleEmail from './email/SingleEmail';
 import MultipleEmail from './email/MultipleEmail';
 import BulkEmail from './email/BulkEmail';
 import Campaigns from './Campaigns';
+import axios from 'axios';
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const [activeSection, setActiveSection] = useState('email-verification');
+  const [activeSection, setActiveSection] = useState('single-email');
+  const [verificationStatus, setVerificationStatus] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Check email verification status on component mount
+  useEffect(() => {
+    checkVerificationStatus();
+  }, []);
+
+  const checkVerificationStatus = async () => {
+    try {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://email-sender-gefj.onrender.com';
+      const token = localStorage.getItem('token');
+      
+      const response = await axios.get(`${API_BASE_URL}/api/email-verification/status`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      setVerificationStatus(response.data);
+      
+      // Don't force redirect to verification unless explicitly needed
+      // User can manually navigate to email verification if needed
+      
+    } catch (error) {
+      // Silently handle error - don't force redirect
+      setVerificationStatus(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const renderContent = () => {
+    if (loading) {
+      return (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '400px',
+          color: '#94A3B8'
+        }}>
+          <div>Loading...</div>
+        </div>
+      );
+    }
+
     switch (activeSection) {
       case 'email-verification':
-        return <EmailVerification />;
+        return <EmailVerification onVerificationComplete={() => {
+          checkVerificationStatus();
+          setActiveSection('single-email');
+        }} />;
       case 'single-email':
-        return <SingleEmail />;
+        return verificationStatus?.isVerified ? <SingleEmail /> : <EmailVerification onVerificationComplete={() => {
+          checkVerificationStatus();
+          setActiveSection('single-email');
+        }} />;
       case 'multiple-email':
-        return <MultipleEmail />;
+        return verificationStatus?.isVerified ? <MultipleEmail /> : <EmailVerification onVerificationComplete={() => {
+          checkVerificationStatus();
+          setActiveSection('multiple-email');
+        }} />;
       case 'bulk-email':
-        return <BulkEmail />;
+        return verificationStatus?.isVerified ? <BulkEmail /> : <EmailVerification onVerificationComplete={() => {
+          checkVerificationStatus();
+          setActiveSection('bulk-email');
+        }} />;
       case 'campaigns':
-        return <Campaigns />;
+        return verificationStatus?.isVerified ? <Campaigns /> : <EmailVerification onVerificationComplete={() => {
+          checkVerificationStatus();
+          setActiveSection('campaigns');
+        }} />;
       default:
-        return <EmailVerification />;
+        return <EmailVerification onVerificationComplete={() => {
+          checkVerificationStatus();
+          setActiveSection('single-email');
+        }} />;
     }
   };
 
