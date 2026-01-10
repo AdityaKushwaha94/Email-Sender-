@@ -5,9 +5,13 @@ import axios from 'axios';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://email-sender-gefj.onrender.com';
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000, // 30 second timeout
+  timeout: 15000, // 15 second timeout
   withCredentials: true
 });
+
+// Track ongoing requests to prevent duplicates
+let ongoingSendOtpRequest = null;
+let ongoingResendOtpRequest = null;
 
 // Add auth token to requests
 axiosInstance.interceptors.request.use(
@@ -35,6 +39,16 @@ const EmailVerification = ({ onVerificationComplete }) => {
   // Check verification status on component mount
   useEffect(() => {
     fetchVerificationStatus();
+    
+    // Cleanup function to cancel ongoing requests when component unmounts
+    return () => {
+      if (ongoingSendOtpRequest) {
+        ongoingSendOtpRequest = null;
+      }
+      if (ongoingResendOtpRequest) {
+        ongoingResendOtpRequest = null;
+      }
+    };
   }, []);
 
   const fetchVerificationStatus = async () => {
@@ -68,22 +82,41 @@ const EmailVerification = ({ onVerificationComplete }) => {
 
   const handleSendOTP = async (e) => {
     e.preventDefault();
+    
+    // Prevent duplicate requests
+    if (ongoingSendOtpRequest || loading) {
+      return;
+    }
+    
     setLoading(true);
     setAlert({ type: '', message: '' });
 
     try {
-      await axiosInstance.post('/api/email-verification/send-otp', formData);
+      // Create and track the request
+      ongoingSendOtpRequest = axiosInstance.post('/api/email-verification/send-otp', formData);
+      
+      await ongoingSendOtpRequest;
+      
       setAlert({ 
         type: 'success', 
         message: `OTP sent successfully to ${formData.email}! Check your inbox.` 
       });
       setStep(2);
     } catch (error) {
-      setAlert({ 
-        type: 'error', 
-        message: error.response?.data?.error || 'Failed to send OTP' 
-      });
+      // Handle cancelled requests gracefully
+      if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+        setAlert({ 
+          type: 'error', 
+          message: 'Request timeout. Please check your connection and try again.' 
+        });
+      } else {
+        setAlert({ 
+          type: 'error', 
+          message: error.response?.data?.error || 'Failed to send OTP' 
+        });
+      }
     } finally {
+      ongoingSendOtpRequest = null;
       setLoading(false);
     }
   };
@@ -119,13 +152,16 @@ const EmailVerification = ({ onVerificationComplete }) => {
   };
 
   const handleResendOTP = async () => {
-    if (resendCooldown > 0) return;
+    if (resendCooldown > 0 || ongoingResendOtpRequest || loading) return;
     
     setLoading(true);
     setAlert({ type: '', message: '' });
 
     try {
-      const response = await axiosInstance.post('/api/email-verification/resend-otp');
+      // Create and track the request
+      ongoingResendOtpRequest = axiosInstance.post('/api/email-verification/resend-otp');
+      
+      const response = await ongoingResendOtpRequest;
       
       setAlert({ 
         type: 'success', 
@@ -145,9 +181,23 @@ const EmailVerification = ({ onVerificationComplete }) => {
       }, 1000);
       
     } catch (error) {
-      setAlert({ 
-        type: 'error', 
-        message: error.response?.data?.error || error.message || 'Failed to resend OTP' 
+      // Handle cancelled requests gracefully
+      if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+        setAlert({ 
+          type: 'error', 
+          message: 'Request timeout. Please check your connection and try again.' 
+        });
+      } else {
+        setAlert({ 
+          type: 'error', 
+          message: error.response?.data?.error || error.message || 'Failed to resend OTP'
+        });
+      }
+    } finally {
+      ongoingResendOtpRequest = null;
+      setLoading(false);
+    }
+  }; 
       });
     } finally {
       setLoading(false);

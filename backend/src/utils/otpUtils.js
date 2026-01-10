@@ -54,7 +54,9 @@ const sendOTPEmail = async (toEmail, otp, userName = 'User') => {
       pool: true,
       maxConnections: 1,
       rateDelta: 20000,
-      rateLimit: 5
+      rateLimit: 3, // Reduced from 5 to 3 to avoid Gmail rate limits
+      connectionTimeout: 10000, // 10 seconds
+      socketTimeout: 10000 // 10 seconds
     });
 
     const mailOptions = {
@@ -86,7 +88,13 @@ const sendOTPEmail = async (toEmail, otp, userName = 'User') => {
       `
     };
 
-    await transport.sendMail(mailOptions);
+    // Add timeout to the email sending operation
+    const emailPromise = transport.sendMail(mailOptions);
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Email send timeout')), 15000)
+    );
+
+    await Promise.race([emailPromise, timeoutPromise]);
     return true;
   } catch (error) {
     // Log error details for debugging but don't expose sensitive info
@@ -94,9 +102,18 @@ const sendOTPEmail = async (toEmail, otp, userName = 'User') => {
       console.error('OTP Email Error:', {
         code: error.code,
         message: error.message,
-        command: error.command
+        command: error.command,
+        stack: error.stack
       });
     }
+    
+    // Handle specific Gmail errors
+    if (error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT') {
+      console.error('Gmail connection error:', error.message);
+    } else if (error.message && error.message.includes('rate')) {
+      console.error('Gmail rate limit error:', error.message);
+    }
+    
     return false;
   }
 };

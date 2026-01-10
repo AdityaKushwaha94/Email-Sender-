@@ -57,37 +57,33 @@ const Dashboard = () => {
       );
     }
 
+    // Common verification completion handler
+    const handleVerificationComplete = () => {
+      checkVerificationStatus();
+      if (activeSection !== 'email-verification') {
+        // Don't change section if user is already on verification page
+        setActiveSection('single-email');
+      }
+    };
+
+    // If not verified and not explicitly on verification page, show verification
+    if (!verificationStatus?.isVerified && activeSection !== 'email-verification') {
+      return <EmailVerification onVerificationComplete={handleVerificationComplete} />;
+    }
+
     switch (activeSection) {
       case 'email-verification':
-        return <EmailVerification onVerificationComplete={() => {
-          checkVerificationStatus();
-          setActiveSection('single-email');
-        }} />;
+        return <EmailVerification onVerificationComplete={handleVerificationComplete} />;
       case 'single-email':
-        return verificationStatus?.isVerified ? <SingleEmail /> : <EmailVerification onVerificationComplete={() => {
-          checkVerificationStatus();
-          setActiveSection('single-email');
-        }} />;
+        return verificationStatus?.isVerified ? <SingleEmail /> : <EmailVerification onVerificationComplete={handleVerificationComplete} />;
       case 'multiple-email':
-        return verificationStatus?.isVerified ? <MultipleEmail /> : <EmailVerification onVerificationComplete={() => {
-          checkVerificationStatus();
-          setActiveSection('multiple-email');
-        }} />;
+        return verificationStatus?.isVerified ? <MultipleEmail /> : <EmailVerification onVerificationComplete={handleVerificationComplete} />;
       case 'bulk-email':
-        return verificationStatus?.isVerified ? <BulkEmail /> : <EmailVerification onVerificationComplete={() => {
-          checkVerificationStatus();
-          setActiveSection('bulk-email');
-        }} />;
+        return verificationStatus?.isVerified ? <BulkEmail /> : <EmailVerification onVerificationComplete={handleVerificationComplete} />;
       case 'campaigns':
-        return verificationStatus?.isVerified ? <Campaigns /> : <EmailVerification onVerificationComplete={() => {
-          checkVerificationStatus();
-          setActiveSection('campaigns');
-        }} />;
+        return verificationStatus?.isVerified ? <Campaigns /> : <EmailVerification onVerificationComplete={handleVerificationComplete} />;
       default:
-        return <EmailVerification onVerificationComplete={() => {
-          checkVerificationStatus();
-          setActiveSection('single-email');
-        }} />;
+        return <EmailVerification onVerificationComplete={handleVerificationComplete} />;
     }
   };
 

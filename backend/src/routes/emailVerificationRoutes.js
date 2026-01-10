@@ -14,6 +14,13 @@ const verificationLimiter = rateLimit({
   message: { error: 'Too many verification attempts, please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
+  handler: (req, res) => {
+    console.log(`Rate limit exceeded for IP: ${req.ip}, User: ${req.userId || 'unknown'}`);
+    res.status(429).json({
+      error: 'Too many verification attempts, please try again later',
+      retryAfter: Math.ceil(req.rateLimit.resetTime / 1000)
+    });
+  }
 });
 
 // Validation middleware
@@ -116,7 +123,7 @@ router.get('/test-email', auth, async (req, res) => {
 router.post('/send-otp', verificationLimiter, auth, emailValidation, handleValidationErrors, async (req, res) => {
   try {
     const { email } = req.body;
-    const user = await User.findById(req.userId);
+    const user = await User.findById(req.userId).select('+emailVerification.otpExpiry');
 
     if (!user) {
       return res.status(404).json({
@@ -129,6 +136,17 @@ router.post('/send-otp', verificationLimiter, auth, emailValidation, handleValid
       return res.status(429).json({
         error: 'Too many verification attempts. Please try again in 15 minutes.'
       });
+    }
+
+    // Check if there's a valid OTP still active (within last 2 minutes to prevent spam)
+    const now = new Date();
+    if (user.emailVerification?.otpExpiry && user.emailVerification.otpExpiry > now) {
+      const timeRemaining = Math.ceil((user.emailVerification.otpExpiry - now) / 1000 / 60);
+      if (timeRemaining > 3) { // If more than 3 minutes remaining, don't send new OTP
+        return res.status(429).json({
+          error: `OTP already sent. Please wait ${timeRemaining} minutes before requesting a new one, or use the resend option.`
+        });
+      }
     }
 
     // Generate OTP
