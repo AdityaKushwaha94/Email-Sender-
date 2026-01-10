@@ -197,12 +197,8 @@ const EmailVerification = ({ onVerificationComplete }) => {
       ongoingResendOtpRequest = null;
       setLoading(false);
     }
-  }; 
-      });
-    } finally {
-      setLoading(false);
-    }
   };
+  
 
   const handleEditEmail = () => {
     setStep(1);
