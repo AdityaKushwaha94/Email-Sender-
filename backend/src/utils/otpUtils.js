@@ -1,9 +1,6 @@
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 
-/**
- * Generate a 6-digit OTP
- */
 const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
@@ -151,8 +148,6 @@ Email Sender Platform`
       `
     };
 
-    console.log(`[EMAIL] Mail options prepared - From: ${mailOptions.from}, To: ${mailOptions.to}`);
-    console.log('[EMAIL] Initiating email send with timeout protection...');
 
     // Add timeout to the email sending operation
     const emailPromise = transport.sendMail(mailOptions);

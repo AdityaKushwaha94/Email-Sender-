@@ -242,6 +242,16 @@ app.get('/health', async (req, res) => {
   }
 });
 
+
+// const('/healtcheck',async(req,res)=>{
+//   try{
+//     if()
+
+//   }catch(error){
+
+//   }
+// });
+
 // 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({
