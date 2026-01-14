@@ -37,7 +37,7 @@ const verifyOTP = (storedOTP, storedExpiry, providedOTP) => {
 const sendOTPEmail = async (toEmail, otp, userName = 'User') => {
   try {
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-      throw new Error('Email service not configured. Missing EMAIL_USER or EMAIL_PASSWORD.');
+      throw new Error('Missing env of email App password.');
     }
 
     // Simple Gmail transporter
@@ -77,9 +77,7 @@ Email Sender Platform`
     }
   };
   
-  /**
-   * Send OTP to user's email using system email with enhanced error handling
-   */
+//sending mail with error handling and logginf  errors 
   const sendOTPEmailEnhanced = async (toEmail, otp, userName = 'User') => {
     try {
       if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
@@ -97,7 +95,7 @@ Email Sender Platform`
       pool: true,
       maxConnections: 1,
       rateDelta: 20000,
-      rateLimit: 3, // Reduced from 5 to 3 to avoid Gmail rate limits
+      rateLimit: 3, 
       connectionTimeout: 10000, // 10 seconds
       socketTimeout: 10000 // 10 seconds
     });
