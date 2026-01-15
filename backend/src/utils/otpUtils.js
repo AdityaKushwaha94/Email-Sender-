@@ -1,5 +1,5 @@
-const crypto = require('crypto');
-const nodemailer = require('nodemailer');
+const crypto = require("crypto");
+const nodemailer = require("nodemailer");
 
 const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -21,12 +21,12 @@ const verifyOTP = (storedOTP, storedExpiry, providedOTP) => {
   if (!storedOTP || !storedExpiry || !providedOTP) {
     return false;
   }
-  
+
   // Check if OTP is expired
   if (new Date() > new Date(storedExpiry)) {
     return false;
   }
-  
+
   // Check if OTP matches
   return storedOTP === providedOTP.toString();
 };
@@ -34,25 +34,25 @@ const verifyOTP = (storedOTP, storedExpiry, providedOTP) => {
 /**
  * Send OTP to user's email using system email
  */
-const sendOTPEmail = async (toEmail, otp, userName = 'User') => {
+const sendOTPEmail = async (toEmail, otp, userName = "User") => {
   try {
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-      throw new Error('Missing env of email App password.');
+      throw new Error("Missing env of email App password.");
     }
 
     // Simple Gmail transporter
     const transport = nodemailer.createTransport({
-      service: 'gmail',
+      service: "gmail",
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD
-      }
+        pass: process.env.EMAIL_PASSWORD,
+      },
     });
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: toEmail,
-      subject: 'Email Verification - OTP Code',
+      subject: "Email Verification - OTP Code",
       text: `Hello ${userName},
 
 You requested to verify your email address for sending emails through our platform.
@@ -66,61 +66,63 @@ Important:
 
 If you didn't request this verification, please ignore this email.
 
-Email Sender Platform`
+Email Sender Platform`,
     };
 
     await transport.sendMail(mailOptions);
     return true;
-    } catch (error) {
-      console.error('Email send error:', error.message);
-      return false;
+  } catch (error) {
+    console.error("Email send error:", error.message);
+    return false;
+  }
+};
+
+//sending mail with error handling and logginf  errors
+const sendOTPEmailEnhanced = async (toEmail, otp, userName = "User") => {
+  try {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+      throw new Error(
+        "Email service not configured. Missing EMAIL_USER or EMAIL_PASSWORD."
+      );
     }
-  };
-  
-//sending mail with error handling and logginf  errors 
-  const sendOTPEmailEnhanced = async (toEmail, otp, userName = 'User') => {
-    try {
-      if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-        throw new Error('Email service not configured. Missing EMAIL_USER or EMAIL_PASSWORD.');
-      }
-  
-      // Create system transporter with Gmail service
-      const transport = nodemailer.createTransport({
-      service: 'gmail',
+
+    // Create system transporter with Gmail service
+    const transport = nodemailer.createTransport({
+      service: "gmail",
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD
+        pass: process.env.EMAIL_PASSWORD,
       },
       // Add timeout and connection options for production
       pool: true,
       maxConnections: 1,
       rateDelta: 20000,
-      rateLimit: 3, 
+      rateLimit: 3,
       connectionTimeout: 10000, // 10 seconds
-      socketTimeout: 10000 // 10 seconds
+      socketTimeout: 10000, // 10 seconds
     });
 
-    console.log('[EMAIL] Testing transporter connection...');
-    
+    console.log("[EMAIL] Testing transporter connection...");
+
     // Verify the connection before attempting to send
     try {
       await transport.verify();
-      console.log('[EMAIL] Transporter verified successfully');
+      console.log("[EMAIL] Transporter verified successfully");
     } catch (verifyError) {
-      console.error('[EMAIL] Transporter verification FAILED:', {
+      console.error("[EMAIL] Transporter verification FAILED:", {
         code: verifyError.code,
         message: verifyError.message,
         response: verifyError.response,
-        command: verifyError.command
+        command: verifyError.command,
       });
       throw new Error(`Gmail connection failed: ${verifyError.message}`);
     }
 
-    console.log('[EMAIL] Preparing mail options...');
+    console.log("[EMAIL] Preparing mail options...");
     const mailOptions = {
       from: `"Email Sender Verification" <${process.env.EMAIL_USER}>`,
       to: toEmail,
-      subject: 'Email Verification - OTP Code',
+      subject: "Email Verification - OTP Code",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #333; text-align: center;">Email Verification</h2>
@@ -143,52 +145,59 @@ Email Sender Platform`
             This is an automated message from Email Sender Platform.
           </p>
         </div>
-      `
+      `,
     };
-
 
     // Add timeout to the email sending operation
     const emailPromise = transport.sendMail(mailOptions);
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Email send timeout after 15 seconds')), 15000)
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(
+        () => reject(new Error("Email send timeout after 15 seconds")),
+        15000
+      )
     );
 
     const result = await Promise.race([emailPromise, timeoutPromise]);
-    console.log('[EMAIL] Email sent successfully:', {
+    console.log("[EMAIL] Email sent successfully:", {
       messageId: result.messageId,
       response: result.response,
-      to: toEmail
+      to: toEmail,
     });
-    
+
     return true;
   } catch (error) {
-    console.error('[EMAIL] Send operation FAILED:', {
+    console.error("[EMAIL] Send operation FAILED:", {
       to: toEmail,
       code: error.code,
       message: error.message,
       response: error.response,
       command: error.command,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : 'Hidden in production',
-      timestamp: new Date().toISOString()
+      stack:
+        process.env.NODE_ENV === "development"
+          ? error.stack
+          : "Hidden in production",
+      timestamp: new Date().toISOString(),
     });
-    
+
     // Handle specific Gmail errors with detailed logging
-    if (error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT') {
+    if (error.code === "ECONNRESET" || error.code === "ETIMEDOUT") {
       console.error(`[EMAIL] Network error for ${toEmail}:`, error.message);
-    } else if (error.code === 'EAUTH') {
-      console.error('[EMAIL] Authentication failed - check Gmail credentials and app password');
-    } else if (error.code === 'EMESSAGE') {
+    } else if (error.code === "EAUTH") {
+      console.error(
+        "[EMAIL] Authentication failed - check Gmail credentials and app password"
+      );
+    } else if (error.code === "EMESSAGE") {
       console.error(`[EMAIL] Message error for ${toEmail}:`, error.message);
-    } else if (error.message && error.message.includes('rate')) {
+    } else if (error.message && error.message.includes("rate")) {
       console.error(`[EMAIL] Rate limit exceeded for ${toEmail}`);
-    } else if (error.message && error.message.includes('timeout')) {
+    } else if (error.message && error.message.includes("timeout")) {
       console.error(`[EMAIL] Timeout sending to ${toEmail}`);
     } else if (error.response) {
       console.error(`[EMAIL] SMTP error for ${toEmail}:`, error.response);
     } else {
       console.error(`[EMAIL] Unknown error for ${toEmail}:`, error.message);
     }
-    
+
     return false;
   }
 };
@@ -204,17 +213,17 @@ const testEmailCredentials = async (smtpHost, smtpPort, email, password) => {
       secure: smtpPort === 465,
       auth: {
         user: email,
-        pass: password
-      }
+        pass: password,
+      },
     });
 
     // Verify connection
     await transport.verify();
     return { success: true };
   } catch (error) {
-    return { 
-      success: false, 
-      error: error.message 
+    return {
+      success: false,
+      error: error.message,
     };
   }
 };
@@ -230,14 +239,14 @@ const sendTestEmail = async (smtpHost, smtpPort, email, password, userName) => {
       secure: smtpPort === 465,
       auth: {
         user: email,
-        pass: password
-      }
+        pass: password,
+      },
     });
 
     const mailOptions = {
       from: `"${userName}" <${email}>`,
       to: email, // Send test email to themselves
-      subject: 'Email Credentials Verified Successfully!',
+      subject: "Email Credentials Verified Successfully!",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #28a745; text-align: center;">✅ Email Verified Successfully!</h2>
@@ -258,13 +267,13 @@ const sendTestEmail = async (smtpHost, smtpPort, email, password, userName) => {
             <p>Thank you for using our Email Sender Platform!</p>
           </div>
         </div>
-      `
+      `,
     };
 
     await transport.sendMail(mailOptions);
     return true;
   } catch (error) {
-    console.error('Error sending test email:', error);
+    console.error("Error sending test email:", error);
     return false;
   }
 };
@@ -275,5 +284,5 @@ module.exports = {
   verifyOTP,
   sendOTPEmail,
   testEmailCredentials,
-  sendTestEmail
+  sendTestEmail,
 };
