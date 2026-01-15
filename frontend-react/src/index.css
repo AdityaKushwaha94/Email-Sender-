@@ -24,7 +24,7 @@ body {
   background-color: #1E293B;
   color: #F1F5F9;
   padding: 1rem 0;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   border-bottom: 1px solid #334155;
 }
 
@@ -85,7 +85,7 @@ body {
 .card {
   background: #1E293B;
   border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   padding: 1.5rem;
   margin-bottom: 1rem;
   border: 1px solid #334155;
@@ -134,7 +134,7 @@ body {
 .sidebar {
   background: #1E293B;
   border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   height: fit-content;
   border: 1px solid #334155;
 }
@@ -166,7 +166,7 @@ body {
 .main-content {
   background: #1E293B;
   border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   padding: 2rem;
   border: 1px solid #334155;
 }
@@ -245,8 +245,13 @@ body {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .alert {
@@ -277,11 +282,11 @@ body {
   .dashboard {
     grid-template-columns: 1fr;
   }
-  
+
   .sidebar {
     order: 2;
   }
-  
+
   .email-options {
     grid-template-columns: 1fr;
   }

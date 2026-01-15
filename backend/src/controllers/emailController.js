@@ -1,18 +1,18 @@
-const nodemailer = require('nodemailer');
-const EmailCampaign = require('../models/EmailCampaign');
-const User = require('../models/User');
-const { emailQueue, redis } = require('../../config/redis');
+const nodemailer = require("nodemailer");
+const EmailCampaign = require("../models/EmailCampaign");
+const User = require("../models/User");
+const { emailQueue, redis } = require("../../config/redis");
 
 // Create transporter function using system email
 const createTransport = async () => {
   return nodemailer.createTransport({
-    host: 'smtp.gmail.com',
+    host: "smtp.gmail.com",
     port: 587,
     secure: false,
     auth: {
       user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD
-    }
+      pass: process.env.EMAIL_PASSWORD,
+    },
   });
 };
 
@@ -21,17 +21,17 @@ const sendSingleEmail = async (userId, { to, subject, message, name }) => {
   try {
     // Get user
     const user = await User.findById(userId);
-    
+
     if (!user) {
-      throw new Error('User not found');
+      throw new Error("User not found");
     }
-    
+
     if (!user.emailCredentials?.isVerified) {
-      throw new Error('Please verify your email address first');
+      throw new Error("Please verify your email address first");
     }
 
     const transport = await createTransport();
-    const personalizedMessage = message.replace(/{{name}}/g, name || 'there');
+    const personalizedMessage = message.replace(/{{name}}/g, name || "there");
 
     const mailOptions = {
       from: `"${user.name}" <${process.env.EMAIL_USER}>`,
@@ -40,7 +40,7 @@ const sendSingleEmail = async (userId, { to, subject, message, name }) => {
       subject: subject,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #2563eb;">Hello ${name || 'there'}!</h2>
+          <h2 style="color: #2563eb;">Hello ${name || "there"}!</h2>
           <div style="line-height: 1.6; white-space: pre-line;">
             ${personalizedMessage}
           </div>
@@ -49,7 +49,7 @@ const sendSingleEmail = async (userId, { to, subject, message, name }) => {
             Sent by ${user.name} via Email Sender Platform
           </p>
         </div>
-      `
+      `,
     };
 
     const result = await transport.sendMail(mailOptions);
@@ -58,7 +58,7 @@ const sendSingleEmail = async (userId, { to, subject, message, name }) => {
       messageId: result.messageId,
       to: to,
       from: process.env.EMAIL_USER,
-      replyTo: user.emailCredentials.senderEmail
+      replyTo: user.emailCredentials.senderEmail,
     };
   } catch (error) {
     throw new Error(`Failed to send email: ${error.message}`);
@@ -67,18 +67,20 @@ const sendSingleEmail = async (userId, { to, subject, message, name }) => {
 
 // Send multiple emails using user's verified credentials (up to 100)
 const sendMultipleEmails = async (userId, { subject, message, recipients }) => {
-  const user = await User.findById(userId).select('+emailCredentials.senderPassword');
-  
+  const user = await User.findById(userId).select(
+    "+emailCredentials.senderPassword"
+  );
+
   if (!user) {
-    throw new Error('User not found');
+    throw new Error("User not found");
   }
-  
+
   if (!user.emailCredentials?.isVerified) {
-    throw new Error('Please verify your email credentials first');
+    throw new Error("Please verify your email credentials first");
   }
-  
+
   if (recipients.length > 100) {
-    throw new Error('Maximum 100 recipients allowed per batch');
+    throw new Error("Maximum 100 recipients allowed per batch");
   }
 
   const transport = await createTransport();
@@ -87,13 +89,16 @@ const sendMultipleEmails = async (userId, { subject, message, recipients }) => {
     failed: 0,
     total: recipients.length,
     errors: [],
-    successEmails: []
+    successEmails: [],
   };
 
   for (const recipient of recipients) {
     try {
-      const personalizedMessage = message.replace(/{{name}}/g, recipient.name || 'there');
-      
+      const personalizedMessage = message.replace(
+        /{{name}}/g,
+        recipient.name || "there"
+      );
+
       const mailOptions = {
         from: `"${user.name}" <${process.env.EMAIL_USER}>`,
         replyTo: user.emailCredentials.senderEmail, // Set reply-to as user's verified email
@@ -101,7 +106,7 @@ const sendMultipleEmails = async (userId, { subject, message, recipients }) => {
         subject: subject,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #2563eb;">Hello ${recipient.name || 'there'}!</h2>
+            <h2 style="color: #2563eb;">Hello ${recipient.name || "there"}!</h2>
             <div style="line-height: 1.6; white-space: pre-line;">
               ${personalizedMessage}
             </div>
@@ -110,22 +115,22 @@ const sendMultipleEmails = async (userId, { subject, message, recipients }) => {
               Sent by ${user.name} via Email Sender Platform
             </p>
           </div>
-        `
+        `,
       };
 
       await transport.sendMail(mailOptions);
       results.sent++;
       results.successEmails.push(recipient.email);
-      
+
       // Add small delay between emails to avoid rate limiting
       if (results.sent % 10 === 0) {
-        await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay every 10 emails
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // 1 second delay every 10 emails
       }
     } catch (error) {
       results.failed++;
       results.errors.push({
         email: recipient.email,
-        error: error.message
+        error: error.message,
       });
     }
   }
@@ -136,9 +141,9 @@ const sendMultipleEmails = async (userId, { subject, message, recipients }) => {
 // Helper to interpolate variables in email body
 const interpolateTemplate = (template, data) => {
   let result = template;
-  if (data && typeof data === 'object') {
-    Object.keys(data).forEach(key => {
-      result = result.replace(new RegExp(`{{${key}}}`, 'g'), data[key] || '');
+  if (data && typeof data === "object") {
+    Object.keys(data).forEach((key) => {
+      result = result.replace(new RegExp(`{{${key}}}`, "g"), data[key] || "");
     });
   }
   return result;
@@ -148,31 +153,34 @@ const interpolateTemplate = (template, data) => {
 const sendBulkEmails = async (campaignId) => {
   try {
     console.log(`🚀 Queuing campaign ${campaignId} for processing`);
-    
+
     if (!emailQueue) {
       // If Redis is not available, process immediately
       return await processCampaignDirectly(campaignId);
     }
-    
+
     // Add campaign to Redis queue for background processing
-    const job = await emailQueue.add('processCampaign', {
-      campaignId: campaignId.toString()
-    }, {
-      attempts: 3,
-      backoff: 'exponential',
-      delay: 5000 // Start processing after 5 seconds
-    });
-    
+    const job = await emailQueue.add(
+      "processCampaign",
+      {
+        campaignId: campaignId.toString(),
+      },
+      {
+        attempts: 3,
+        backoff: "exponential",
+        delay: 5000, // Start processing after 5 seconds
+      }
+    );
+
     console.log(`📝 Campaign ${campaignId} queued with job ID: ${job.id}`);
-    
+
     return {
       jobId: job.id,
-      status: 'queued',
-      message: 'Campaign has been queued for processing'
+      status: "queued",
+      message: "Campaign has been queued for processing",
     };
-    
   } catch (error) {
-    console.error('Error queuing bulk emails:', error);
+    console.error("Error queuing bulk emails:", error);
     // Fallback to direct processing if queue fails
     return await processCampaignDirectly(campaignId);
   }
@@ -183,14 +191,14 @@ const processCampaignDirectly = async (campaignId) => {
   try {
     const campaign = await EmailCampaign.findById(campaignId);
     if (!campaign) {
-      throw new Error('Campaign not found');
+      throw new Error("Campaign not found");
     }
 
-    campaign.status = 'processing';
+    campaign.status = "processing";
     await campaign.save();
 
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      service: "gmail",
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD,
@@ -202,8 +210,11 @@ const processCampaignDirectly = async (campaignId) => {
 
     for (const recipient of campaign.recipients) {
       try {
-        const personalizedMessage = campaign.body.replace(/{{name}}/g, recipient.name);
-        
+        const personalizedMessage = campaign.body.replace(
+          /{{name}}/g,
+          recipient.name
+        );
+
         const mailOptions = {
           from: process.env.EMAIL_USER,
           to: recipient.email,
@@ -219,42 +230,42 @@ const processCampaignDirectly = async (campaignId) => {
                 Campaign: ${campaign.name}
               </p>
             </div>
-          `
+          `,
         };
 
         await transport.sendMail(mailOptions);
         sent++;
         console.log(`✅ Email sent to ${recipient.email}`);
-        
+
         // Add small delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       } catch (error) {
         failed++;
         console.error(`❌ Failed to send email to ${recipient.email}:`, error);
       }
     }
 
-    campaign.status = 'completed';
+    campaign.status = "completed";
     campaign.sentCount = sent;
     campaign.failedCount = failed;
     await campaign.save();
 
     return {
-      status: 'completed',
+      status: "completed",
       sent,
       failed,
-      message: `Campaign completed: ${sent} sent, ${failed} failed`
+      message: `Campaign completed: ${sent} sent, ${failed} failed`,
     };
   } catch (error) {
-    console.error('Error processing campaign directly:', error);
+    console.error("Error processing campaign directly:", error);
     if (campaignId) {
       try {
-        await EmailCampaign.findByIdAndUpdate(campaignId, { 
-          status: 'failed',
-          error: error.message 
+        await EmailCampaign.findByIdAndUpdate(campaignId, {
+          status: "failed",
+          error: error.message,
         });
       } catch (updateError) {
-        console.error('Error updating campaign status:', updateError);
+        console.error("Error updating campaign status:", updateError);
       }
     }
     throw error;
@@ -266,30 +277,29 @@ const getCampaignJobStatus = async (jobId) => {
   try {
     const job = await emailQueue.getJob(jobId);
     if (!job) {
-      return { status: 'not_found' };
+      return { status: "not_found" };
     }
-    
+
     const state = await job.getState();
     const progress = job.progress();
-    
+
     let result = null;
-    if (state === 'completed') {
+    if (state === "completed") {
       result = job.returnvalue;
-    } else if (state === 'failed') {
+    } else if (state === "failed") {
       result = { error: job.failedReason };
     }
-    
+
     return {
       status: state,
       progress: progress,
       result: result,
       createdAt: new Date(job.timestamp),
       processedOn: job.processedOn ? new Date(job.processedOn) : null,
-      finishedOn: job.finishedOn ? new Date(job.finishedOn) : null
+      finishedOn: job.finishedOn ? new Date(job.finishedOn) : null,
     };
-    
   } catch (error) {
-    console.error('Error getting job status:', error);
+    console.error("Error getting job status:", error);
     throw error;
   }
 };
@@ -301,24 +311,24 @@ const getQueueStats = async () => {
     const active = await emailQueue.getActive();
     const completed = await emailQueue.getCompleted();
     const failed = await emailQueue.getFailed();
-    
+
     return {
       waiting: waiting.length,
       active: active.length,
       completed: completed.length,
       failed: failed.length,
-      total: waiting.length + active.length + completed.length + failed.length
+      total: waiting.length + active.length + completed.length + failed.length,
     };
   } catch (error) {
-    console.error('Error getting queue stats:', error);
+    console.error("Error getting queue stats:", error);
     throw error;
   }
 };
 
-module.exports = { 
+module.exports = {
   sendSingleEmail,
   sendMultipleEmails,
-  sendBulkEmails, 
-  getCampaignJobStatus, 
-  getQueueStats 
+  sendBulkEmails,
+  getCampaignJobStatus,
+  getQueueStats,
 };
