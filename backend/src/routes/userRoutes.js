@@ -51,6 +51,7 @@ router.put('/:userId/blacklist', auth, async (req, res) => {
     res.json({ message: 'User blacklisted', user });
   } catch (error) {
     res.status(500).json({ error: error.message });
+    throw httpforbidden('Admin block your entry ');
   }
 });
 
