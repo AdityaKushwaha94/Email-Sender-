@@ -232,7 +232,7 @@ app.get('/health', async (req, res) => {
       redis: redisHealth,
       uptime: Math.floor(process.uptime()),
       memory: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + 'MB',
-      timestamp: new Date().toISOString()
+     // timestamp: new Date().toISOString()
     });
   } catch (error) {
     res.status(500).json({ 
@@ -243,14 +243,20 @@ app.get('/health', async (req, res) => {
 });
 
 
-// const('/healtcheck',async(req,res)=>{
-//   try{
-//     if()
+app.get('/test-aditya-api',(req,res)=>{
+  try {
+    {const data={
+    message:"Test successful",
+    status:"OK",
+    time:new Date().toISOString()
+  };
+  res.json(data);}
+  } catch (error) {
+    res.status(429).json({ error: 'Too many requests, please try again later' })|| res.status(500).json({ error: error.message });
+    
+  }
 
-//   }catch(error){
-
-//   }
-// });
+  });
 
 // 404 handler
 app.use('*', (req, res) => {
@@ -283,7 +289,6 @@ const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
-  console.log(`🔒 Security features enabled: Helmet, Rate Limiting, Input Sanitization`);
   if (process.env.NODE_ENV === 'development') {
     console.log(`🔗 Frontend: http://localhost:3000`);
     console.log(`🔗 Backend: http://localhost:${PORT}`);
