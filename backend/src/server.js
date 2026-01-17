@@ -6,6 +6,7 @@ const RedisStore = require('connect-redis').default;
 const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 const passport = require('passport');
+const axios = require('axios');   
 const path = require('path');
 const helmet = require('helmet');
 const compression = require('compression');
@@ -252,7 +253,19 @@ app.get('/health', async (req, res) => {
 //   }
 // });
 
-// 404 handler
+app.get('/healt/checktest', async (req,res)=>
+{
+try{
+ const apiResponse = await axios.get('https://httpbin.org/json');
+ res.json({
+  status:"healthy",
+  data:apiResponse.data
+ })
+
+}catch(error){
+  res.status(500).json({ status: "unhealthy", error: "Internal error" });
+}
+});
 app.use('*', (req, res) => {
   res.status(404).json({
     error: 'Endpoint not found',
@@ -282,8 +295,8 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
-  console.log(`🔒 Security features enabled: Helmet, Rate Limiting, Input Sanitization`);
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Done bhai!`);
   if (process.env.NODE_ENV === 'development') {
     console.log(`🔗 Frontend: http://localhost:3000`);
     console.log(`🔗 Backend: http://localhost:${PORT}`);
@@ -292,9 +305,9 @@ const server = app.listen(PORT, () => {
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  console.log('🚫 SIGTERM received, shutting down gracefully');
+  console.log(' SIGTERM received, shutting down gracefully');
   server.close(() => {
-    console.log('💫 Process terminated');
+    console.log(' Process terminated');
     process.exit(0);
   });
 });
