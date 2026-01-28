@@ -124,7 +124,7 @@ const clearCache = async (pattern) => {
     const keys = await redis.keys(pattern);
     if (keys.length > 0) {
       await redis.del(...keys);
-      console.log(`🗑️ Cleared ${keys.length} cache entries for pattern: ${pattern}`);
+      console.log(` Cleared ${keys.length} cache entries for pattern: ${pattern}`);
     }
   } catch (error) {
     console.error('Error clearing cache:', error);
