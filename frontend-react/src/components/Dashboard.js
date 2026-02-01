@@ -24,7 +24,7 @@ const Dashboard = () => {
     try {
       const API_BASE_URL =
         import.meta.env.VITE_API_BASE_URL ||
-        "https://email-sender-gefj.onrender.com";
+        "http://localhost:5000";
       const token = localStorage.getItem("token");
 
       const response = await axios.get(
