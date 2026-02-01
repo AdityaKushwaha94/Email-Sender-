@@ -2,6 +2,13 @@ const { emailQueue } = require('../../config/redis');
 const nodemailer = require('nodemailer');
 const EmailCampaign = require('../models/EmailCampaign');
 const User = require('../models/User');
+const queue=require('bull');
+var buckets = require('buckets-js');
+
+var bucketname = new buckets.Queue();
+bucketname.add(1);
+
+
 
 // Helper to interpolate variables in email body
 const interpolateTemplate = (template, data) => {
